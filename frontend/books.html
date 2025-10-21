@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>도서 목록 · 마당 온라인 서점</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-slate-950">
+  <div class="min-h-screen bg-gradient-to-bl from-slate-900 via-slate-950 to-slate-900 text-slate-100">
+    <header class="glass-panel border-b border-white/10">
+      <div class="max-w-6xl mx-auto flex items-center justify-between py-4 px-6">
+        <a href="index.html" class="text-xl font-semibold tracking-tight flex items-center gap-2">
+          <span class="text-primary-300">📚</span> 마당 온라인 서점
+        </a>
+        <nav class="flex items-center gap-3 text-sm font-medium">
+          <a href="books.html" class="nav-link active">도서</a>
+          <a href="customer-login.html" class="nav-link">로그인</a>
+          <a href="my-orders.html" class="nav-link">내 주문</a>
+          <a href="dashboard.html" class="nav-link">대시보드</a>
+          <a href="admin/index.html" class="btn-outline">관리자</a>
+        </nav>
+        <div id="user-info" class="user-pill"></div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-12 space-y-10">
+      <section class="glass-panel p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div>
+            <p class="text-sm uppercase tracking-widest text-primary-300 mb-2">Books</p>
+            <h1 class="text-3xl font-bold">도서 목록</h1>
+            <p class="text-slate-300 mt-2">정렬하고 필터링하여 필요한 도서를 찾아보세요. 컬럼 헤더를 클릭하면 SQL ORDER BY 로 정렬됩니다.</p>
+          </div>
+          <button id="reset-filters" class="btn-ghost">필터 초기화</button>
+        </div>
+      </section>
+
+      <section class="glass-panel p-6 space-y-6">
+        <form id="book-filter-form" class="grid md:grid-cols-4 gap-4">
+          <label class="form-label">
+            도서명
+            <input type="text" id="filter-title" class="input" placeholder="예: 자바" autocomplete="off">
+          </label>
+          <label class="form-label">
+            출판사
+            <input type="text" id="filter-publisher" class="input" placeholder="예: 한빛미디어" autocomplete="off">
+          </label>
+          <label class="form-label">
+            최소 가격 (원)
+            <input type="number" id="filter-min-price" class="input" min="0" step="100">
+          </label>
+          <label class="form-label">
+            최대 가격 (원)
+            <input type="number" id="filter-max-price" class="input" min="0" step="100">
+          </label>
+          <div class="md:col-span-4 flex gap-3 justify-end">
+            <button type="submit" class="btn-primary">검색</button>
+          </div>
+        </form>
+
+        <div class="flex items-center justify-between text-sm text-slate-300">
+          <p id="book-count">총 0권</p>
+          <p>정렬은 헤더 클릭 ➜ SQL ORDER BY</p>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table" id="book-table">
+            <thead>
+              <tr>
+                <th data-column="bookid" class="sortable">ID</th>
+                <th data-column="bookname" class="sortable">도서명</th>
+                <th data-column="publisher" class="sortable">출판사</th>
+                <th data-column="price" class="sortable">정가</th>
+                <th>상세</th>
+              </tr>
+            </thead>
+            <tbody id="book-table-body">
+              <tr>
+                <td colspan="5" class="py-12 text-center text-slate-400">데이터를 불러오는 중입니다...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>© 2025 Madang Bookstore · Books</p>
+    </footer>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/books.js"></script>
+</body>
+</html>

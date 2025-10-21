@@ -1,0 +1,34 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Compiled Java classes
+bin/
+*.class
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# Claude Code
+.claude/
+
+# Serena (MCP)
+.serena/
+
+# Node modules (if using MCP locally)
+node_modules/

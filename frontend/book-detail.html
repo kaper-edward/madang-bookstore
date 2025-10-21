@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>도서 상세 · 마당 온라인 서점</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-slate-950">
+  <div class="min-h-screen bg-gradient-to-tr from-slate-900 via-slate-950 to-slate-900 text-slate-100">
+    <header class="glass-panel border-b border-white/10">
+      <div class="max-w-4xl mx-auto flex items-center justify-between py-4 px-6">
+        <a href="index.html" class="text-xl font-semibold tracking-tight flex items-center gap-2">
+          <span class="text-primary-300">📚</span> 마당 온라인 서점
+        </a>
+        <nav class="flex items-center gap-3 text-sm font-medium">
+          <a href="books.html" class="nav-link">도서 목록</a>
+          <a href="customer-login.html" class="nav-link">고객</a>
+          <a href="my-orders.html" class="nav-link">내 주문</a>
+                  <a href="admin/index.html" class="btn-outline">관리자</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-12 space-y-10">
+      <section class="glass-panel p-6">
+        <div class="flex justify-between items-center">
+          <h1 class="text-3xl font-bold">도서 상세</h1>
+          <div id="user-info" class="user-pill"></div>
+        </div>
+      </section>
+
+      <section id="book-detail" class="space-y-6">
+        <div class="glass-panel p-6 text-center text-slate-300">
+          데이터를 불러오는 중입니다...
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>© 2025 Madang Bookstore</p>
+    </footer>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/books.js"></script>
+</body>
+</html>

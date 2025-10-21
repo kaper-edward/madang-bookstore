@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>고객 관리 · 관리자</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="bg-slate-950">
+  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 text-slate-100">
+    <header class="glass-panel border-b border-white/10">
+      <div class="max-w-6xl mx-auto flex items-center justify-between py-4 px-6">
+        <a href="index.html" class="text-xl font-semibold tracking-tight flex items-center gap-2">
+          <span class="text-primary-300">🛠️</span> 관리자 · 고객 관리
+        </a>
+        <nav class="flex items-center gap-3 text-sm font-medium">
+          <a href="books-admin.html" class="nav-link">도서 관리</a>
+          <a href="customers-admin.html" class="nav-link active">고객 관리</a>
+          <a href="../customer-login.html" class="btn-outline">사용자 보기</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-12 space-y-10">
+      <section class="glass-panel p-6">
+        <h1 class="text-3xl font-bold">고객 관리</h1>
+        <p class="text-slate-300 mt-2">Customer 테이블 CRUD 작업 후 SQL 로그를 확인하세요.</p>
+      </section>
+
+      <section class="grid lg:grid-cols-3 gap-6">
+        <div class="glass-panel p-6 space-y-4 lg:col-span-1">
+          <h2 class="text-xl font-semibold">고객 등록</h2>
+          <form id="customer-create-form" class="form-grid space-y-4">
+            <label class="form-label">이름
+              <input type="text" name="name" class="input" placeholder="홍길동" required>
+            </label>
+            <label class="form-label">주소
+              <input type="text" name="address" class="input" placeholder="서울시 성북구" required>
+            </label>
+            <label class="form-label">전화번호
+              <input type="text" name="phone" class="input" placeholder="010-1234-5678" required>
+            </label>
+            <button type="submit" class="btn-primary w-full">고객 등록</button>
+          </form>
+        </div>
+
+        <div class="glass-panel p-6 lg:col-span-2 space-y-6">
+          <form id="customer-filter-form" class="grid md:grid-cols-3 gap-4">
+            <label class="form-label">이름
+              <input type="text" id="filter-name" class="input" placeholder="이름 검색" autocomplete="off">
+            </label>
+            <label class="form-label">전화번호
+              <input type="text" id="filter-phone" class="input" placeholder="전화번호 검색" autocomplete="off">
+            </label>
+            <label class="form-label">주소
+              <input type="text" id="filter-address" class="input" placeholder="주소 검색" autocomplete="off">
+            </label>
+            <div class="md:col-span-3 flex gap-3 justify-end">
+              <button type="submit" class="btn-primary">검색</button>
+              <button type="button" id="reset-search" class="btn-ghost">초기화</button>
+            </div>
+          </form>
+
+          <div class="table-wrapper">
+            <table class="data-table" id="customer-table">
+              <thead>
+                <tr>
+                  <th data-column="custid" class="sortable">ID</th>
+                  <th data-column="name" class="sortable">이름</th>
+                  <th data-column="address" class="sortable">주소</th>
+                  <th data-column="phone" class="sortable">전화번호</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody id="customer-table-body">
+                <tr>
+                  <td colspan="5" class="py-12 text-center text-slate-400">데이터를 불러오는 중입니다...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="customer-edit-panel" class="glass-panel p-6 hidden">
+        <form id="customer-edit-form" class="grid md:grid-cols-5 gap-4 items-end">
+          <div class="md:col-span-5 flex justify-between items-center">
+            <div>
+              <p class="text-sm uppercase tracking-widest text-primary-300 mb-1">Update</p>
+              <h2 class="text-xl font-semibold">고객 정보 수정</h2>
+            </div>
+            <button type="button" id="cancel-edit" class="btn-ghost">닫기</button>
+          </div>
+          <input type="hidden" name="custid" id="edit-custid">
+          <label class="form-label md:col-span-2">이름
+            <input type="text" name="name" id="edit-name" class="input" required>
+          </label>
+          <label class="form-label md:col-span-2">주소
+            <input type="text" name="address" id="edit-address" class="input" required>
+          </label>
+          <label class="form-label md:col-span-1">전화번호
+            <input type="text" name="phone" id="edit-phone" class="input" required>
+          </label>
+          <div class="md:col-span-5 flex gap-3">
+            <button type="submit" class="btn-primary">저장</button>
+            <button type="button" id="delete-customer" class="btn-danger">삭제</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>© 2025 Madang Bookstore · Admin Customers</p>
+    </footer>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/customers.js"></script>
+</body>
+</html>

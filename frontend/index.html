@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>마당 온라인 서점</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-slate-950">
+  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 text-slate-100">
+    <header class="glass-panel border-b border-white/10">
+      <div class="max-w-6xl mx-auto flex items-center justify-between py-4 px-6">
+        <a href="index.html" class="text-xl font-semibold tracking-tight flex items-center gap-2">
+          <span class="text-primary-300">📚</span> 마당 온라인 서점
+        </a>
+        <nav class="flex items-center gap-3 text-sm font-medium">
+          <a href="books.html" class="nav-link">도서</a>
+          <a href="customer-login.html" class="nav-link">고객</a>
+          <a href="my-orders.html" class="nav-link">내 주문</a>
+          <a href="dashboard.html" class="nav-link">대시보드</a>
+                  <a href="admin/index.html" class="btn-outline">관리자</a>
+        </nav>
+        <div id="user-info" class="user-pill"></div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-12 space-y-12">
+      <section class="hero-panel glass-panel">
+        <div class="space-y-4">
+          <span class="inline-flex items-center gap-2 bg-primary-500/20 text-primary-200 px-3 py-1 rounded-full text-sm font-medium">
+            <span class="text-lg">✨</span> CRUD + SQL + JDBC 학습용 프로젝트
+          </span>
+          <h1 class="text-4xl md:text-5xl font-bold leading-tight">
+            마당 온라인 서점과 함께 <span class="text-primary-200">풀스택</span> 흐름을 체험하세요
+          </h1>
+          <p class="text-lg text-slate-300 max-w-3xl">
+            간단한 HTTP 서버와 MySQL을 활용한 교육용 프로젝트입니다. 학생들이 직접 SQL과 REST API를 확인하면서 CRUD 흐름과 UI/UX를 모두 연습할 수 있도록 구성했습니다.
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <a href="customer-login.html" class="btn-primary">고객 선택하기</a>
+            <a href="books.html" class="btn-outline">도서 둘러보기</a>
+            <a href="dashboard.html" class="btn-ghost">대시보드 보기</a>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-300">
+          <div class="info-chip">Java 21 HttpServer</div>
+          <div class="info-chip">MySQL + JDBC</div>
+          <div class="info-chip">Vanilla JS + Tailwind</div>
+          <div class="info-chip">SQL 로그 시각화</div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">빠른 이동</h2>
+        <div class="grid md:grid-cols-3 gap-6">
+          <a href="books.html" class="quick-card">
+            <span class="icon">📚</span>
+            <div>
+              <h3>도서 CRUD</h3>
+              <p>정렬/검색/추가/수정/삭제를 연습하고 SQL 로그를 확인하세요.</p>
+            </div>
+          </a>
+          <a href="my-orders.html" class="quick-card">
+            <span class="icon">🧾</span>
+            <div>
+              <h3>내 주문 관리</h3>
+              <p>주문을 생성하고 금액을 수정하거나 취소해 보세요.</p>
+            </div>
+          </a>
+          <a href="dashboard.html" class="quick-card">
+            <span class="icon">📈</span>
+            <div>
+              <h3>대시보드</h3>
+              <p>ORDER BY 정렬이 적용된 통계를 확인하고 SQL을 추적하세요.</p>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <section>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="section-title">최신 도서</h2>
+          <button id="refresh-books" class="btn-ghost text-sm">새로고침</button>
+        </div>
+        <div id="latest-books-grid" class="grid md:grid-cols-3 gap-6">
+          <div class="glass-panel-secondary p-6 text-center text-slate-300">데이터를 불러오는 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="glass-panel p-6 space-y-4">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🛠️</span>
+          <div>
+            <h2 class="text-xl font-semibold">서버 상태 점검</h2>
+            <p class="text-sm text-slate-300">버튼을 눌러 REST API가 동작하는지 확인하세요. SQL 로그도 함께 확인할 수 있습니다.</p>
+          </div>
+        </div>
+        <div class="bg-black/40 border border-white/10 rounded-xl p-4">
+          <pre id="server-status" class="text-sm text-primary-200 whitespace-pre-wrap">서버 연결 확인 중...</pre>
+        </div>
+        <div class="flex gap-3">
+          <button id="test-server" class="btn-primary">서버 테스트</button>
+          <a href="QUICKSTART.md" class="btn-outline" target="_blank">실행 가이드 보기</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>© 2025 Madang Bookstore · CRUD SQL Training Project</p>
+    </footer>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      checkLoginStatus();
+      loadLatestBooks();
+      testServerConnection();
+
+      document.getElementById('test-server').addEventListener('click', testServerConnection);
+      document.getElementById('refresh-books').addEventListener('click', loadLatestBooks);
+    });
+
+    async function loadLatestBooks() {
+      try {
+        const response = await fetchAPI('/api/books?action=list&sortBy=bookid&direction=desc');
+        const books = response.data || [];
+        renderLatestBooks(books.slice(0, 3));
+      } catch (error) {
+        renderLatestBooks([]);
+      }
+    }
+
+    function renderLatestBooks(books) {
+      const grid = document.getElementById('latest-books-grid');
+      if (!grid) return;
+
+      if (!books.length) {
+        grid.innerHTML = `<div class="glass-panel-secondary p-6 text-center text-slate-400">도서 데이터를 불러오지 못했습니다.</div>`;
+        return;
+      }
+
+      grid.innerHTML = books.map((book) => `
+        <article class="glass-panel p-6 space-y-3">
+          <p class="text-sm text-slate-400">#${book.bookid}</p>
+          <h3 class="text-xl font-semibold">${escapeHtml(book.bookname)}</h3>
+          <p class="text-slate-300">${escapeHtml(book.publisher)}</p>
+          <p class="text-primary-200 font-semibold">${formatCurrency(book.price)}</p>
+          <a href="book-detail.html?id=${book.bookid}" class="btn-outline w-full">상세 보기</a>
+        </article>
+      `).join('');
+    }
+
+    async function testServerConnection() {
+      const status = document.getElementById('server-status');
+      if (!status) return;
+
+      try {
+        const response = await fetchAPI('/api/test');
+        status.textContent = JSON.stringify(response, null, 2);
+      } catch (error) {
+        status.textContent = `서버 연결 실패: ${error.message}`;
+      }
+    }
+
+    function escapeHtml(value) {
+      if (value === null || value === undefined) return '';
+      return value
+        .toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>

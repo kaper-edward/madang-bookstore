@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>도서 관리 · 관리자</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="bg-slate-950">
+  <div class="min-h-screen bg-gradient-to-bl from-slate-900 via-slate-950 to-slate-900 text-slate-100">
+    <header class="glass-panel border-b border-white/10">
+      <div class="max-w-6xl mx-auto flex items-center justify-between py-4 px-6">
+        <a href="index.html" class="text-xl font-semibold tracking-tight flex items-center gap-2">
+          <span class="text-primary-300">🛠️</span> 관리자 · 도서 관리
+        </a>
+        <nav class="flex items-center gap-3 text-sm font-medium">
+          <a href="books-admin.html" class="nav-link active">도서 관리</a>
+          <a href="customers-admin.html" class="nav-link">고객 관리</a>
+          <a href="../books.html" class="btn-outline">사용자 보기</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-12 space-y-10">
+      <section class="glass-panel p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div>
+            <p class="text-sm uppercase tracking-widest text-primary-300 mb-2">Admin</p>
+            <h1 class="text-3xl font-bold">도서 관리</h1>
+            <p class="text-slate-300 mt-2">Book 테이블 CRUD 작업 후 콘솔 SQL을 확인하세요.</p>
+          </div>
+          <button id="reset-filters" class="btn-ghost">필터 초기화</button>
+        </div>
+      </section>
+
+      <section class="grid lg:grid-cols-3 gap-6">
+        <div class="glass-panel p-6 space-y-4 lg:col-span-1">
+          <h2 class="text-xl font-semibold">도서 등록</h2>
+          <form id="book-create-form" class="form-grid space-y-4">
+            <label class="form-label">도서명
+              <input type="text" name="bookname" class="input" placeholder="예: 자바의 정석" required>
+            </label>
+            <label class="form-label">출판사
+              <input type="text" name="publisher" class="input" placeholder="예: 한빛미디어" required>
+            </label>
+            <label class="form-label">정가 (원)
+              <input type="number" name="price" class="input" min="0" step="100" value="15000" required>
+            </label>
+            <button type="submit" class="btn-primary w-full">도서 등록</button>
+          </form>
+        </div>
+
+        <div class="glass-panel p-6 lg:col-span-2 space-y-6">
+          <form id="book-filter-form" class="grid md:grid-cols-4 gap-4">
+            <label class="form-label">
+              도서명
+              <input type="text" id="filter-title" class="input" placeholder="예: 스프링" autocomplete="off">
+            </label>
+            <label class="form-label">
+              출판사
+              <input type="text" id="filter-publisher" class="input" placeholder="예: 길벗" autocomplete="off">
+            </label>
+            <label class="form-label">
+              최소 가격 (원)
+              <input type="number" id="filter-min-price" class="input" min="0" step="100">
+            </label>
+            <label class="form-label">
+              최대 가격 (원)
+              <input type="number" id="filter-max-price" class="input" min="0" step="100">
+            </label>
+            <div class="md:col-span-4 flex gap-3 justify-end">
+              <button type="submit" class="btn-primary">검색</button>
+            </div>
+          </form>
+
+          <div class="flex items-center justify-between text-sm text-slate-300">
+            <p id="book-count">총 0권</p>
+            <p>헤더 클릭 ➜ SQL ORDER BY</p>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table" id="book-table">
+              <thead>
+                <tr>
+                  <th data-column="bookid" class="sortable">ID</th>
+                  <th data-column="bookname" class="sortable">도서명</th>
+                  <th data-column="publisher" class="sortable">출판사</th>
+                  <th data-column="price" class="sortable">정가</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody id="book-table-body">
+                <tr>
+                  <td colspan="5" class="py-12 text-center text-slate-400">데이터를 불러오는 중입니다...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="book-edit-panel" class="glass-panel p-6 hidden">
+        <form id="book-edit-form" class="grid md:grid-cols-5 gap-4 items-end">
+          <div class="md:col-span-5 flex justify-between items-center">
+            <div>
+              <p class="text-sm uppercase tracking-widest text-primary-300 mb-1">Update</p>
+              <h2 class="text-xl font-semibold">도서 정보 수정</h2>
+            </div>
+            <button type="button" id="cancel-book-edit" class="btn-ghost">닫기</button>
+          </div>
+          <input type="hidden" name="bookid" id="edit-bookid">
+          <label class="form-label md:col-span-2">도서명
+            <input type="text" name="bookname" id="edit-bookname" class="input" required>
+          </label>
+          <label class="form-label md:col-span-2">출판사
+            <input type="text" name="publisher" id="edit-publisher" class="input" required>
+          </label>
+          <label class="form-label md:col-span-1">정가 (원)
+            <input type="number" name="price" id="edit-price" class="input" min="0" step="100" required>
+          </label>
+          <div class="md:col-span-5 flex gap-3">
+            <button type="submit" class="btn-primary">저장</button>
+            <button type="button" id="delete-book" class="btn-danger">삭제</button>
+            <a id="view-detail" href="#" data-base="../book-detail.html" class="btn-outline" target="_blank">상세 보기</a>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>© 2025 Madang Bookstore · Admin Books</p>
+    </footer>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/books.js"></script>
+</body>
+</html>
