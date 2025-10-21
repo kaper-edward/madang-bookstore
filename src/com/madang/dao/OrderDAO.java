@@ -1,6 +1,8 @@
 package com.madang.dao;
 
 import com.madang.model.Order;
+import com.madang.model.PageRequest;
+import com.madang.model.PageResponse;
 import com.madang.util.DBConnection;
 import com.madang.util.SqlLogger;
 
@@ -60,6 +62,92 @@ public class OrderDAO {
         }
 
         return orders;
+    }
+
+    /**
+     * 고객별 주문 내역 조회 (페이징 지원)
+     */
+    public PageResponse<Order> getOrdersByCustomerPaged(PageRequest pageRequest, int custId) throws SQLException {
+        List<Order> orders = new ArrayList<>();
+
+        // 1. 전체 개수 조회
+        long totalItems = countOrdersByCustomer(custId);
+
+        // 2. 페이징된 데이터 조회
+        String sql = "SELECT o.orderid, o.custid, o.bookid, o.saleprice, o.orderdate, " +
+                     "b.bookname, b.publisher, b.price AS listPrice " +
+                     "FROM Orders o " +
+                     "JOIN Book b ON o.bookid = b.bookid " +
+                     "WHERE o.custid = ? " +
+                     "ORDER BY " + resolveOrderSortColumn(pageRequest.getSortBy()) + " " +
+                     resolveDirection(pageRequest.getDirection()) +
+                     " LIMIT ? OFFSET ?";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, custId);
+            pstmt.setInt(2, pageRequest.getPageSize());
+            pstmt.setInt(3, pageRequest.getOffset());
+
+            SqlLogger.logQuery(sql, custId);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Order order = new Order();
+                order.setOrderid(rs.getInt("orderid"));
+                order.setCustid(rs.getInt("custid"));
+                order.setBookid(rs.getInt("bookid"));
+                order.setSaleprice(rs.getInt("saleprice"));
+                order.setOrderdate(rs.getDate("orderdate"));
+                order.setBookname(rs.getString("bookname"));
+                order.setPublisher(rs.getString("publisher"));
+                order.setListPrice(rs.getInt("listPrice"));
+                orders.add(order);
+            }
+        } finally {
+            DBConnection.close(conn, pstmt, rs);
+        }
+
+        // 3. PageResponse 생성
+        return new PageResponse<>(
+            orders,
+            pageRequest.getPage(),
+            pageRequest.getPageSize(),
+            totalItems
+        );
+    }
+
+    /**
+     * 고객별 주문 개수 조회
+     */
+    private long countOrdersByCustomer(int custId) throws SQLException {
+        String sql = "SELECT COUNT(*) as total FROM Orders WHERE custid = ?";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, custId);
+
+            SqlLogger.logQuery(sql, custId);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getLong("total");
+            }
+        } finally {
+            DBConnection.close(conn, pstmt, rs);
+        }
+
+        return 0;
     }
 
     /**

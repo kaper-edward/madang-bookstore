@@ -1,6 +1,8 @@
 package com.madang.dao;
 
 import com.madang.model.Book;
+import com.madang.model.PageRequest;
+import com.madang.model.PageResponse;
 import com.madang.util.DBConnection;
 import com.madang.util.SqlLogger;
 
@@ -87,6 +89,136 @@ public class BookDAO {
         }
 
         return books;
+    }
+
+    /**
+     * 페이지네이션이 적용된 도서 목록 조회
+     *
+     * @param pageRequest 페이지 요청 정보 (page, pageSize, sortBy, direction)
+     * @param title 도서명 검색어 (선택)
+     * @param publisher 출판사 검색어 (선택)
+     * @param minPrice 최소 가격 (선택)
+     * @param maxPrice 최대 가격 (선택)
+     * @return 페이지네이션 응답 (데이터 목록, 페이지 정보, 전체 개수 등)
+     */
+    public PageResponse<Book> getBooksPaged(PageRequest pageRequest, String title, String publisher,
+                                            Integer minPrice, Integer maxPrice) throws SQLException {
+        List<Book> books = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+
+        // WHERE 조건 구성
+        StringBuilder whereClause = new StringBuilder();
+        boolean hasCondition = false;
+
+        if (title != null && !title.isBlank()) {
+            whereClause.append(hasCondition ? " AND" : " WHERE");
+            whereClause.append(" bookname LIKE ?");
+            params.add("%" + title.trim() + "%");
+            hasCondition = true;
+        }
+
+        if (publisher != null && !publisher.isBlank()) {
+            whereClause.append(hasCondition ? " AND" : " WHERE");
+            whereClause.append(" publisher LIKE ?");
+            params.add("%" + publisher.trim() + "%");
+            hasCondition = true;
+        }
+
+        if (minPrice != null) {
+            whereClause.append(hasCondition ? " AND" : " WHERE");
+            whereClause.append(" price >= ?");
+            params.add(minPrice);
+            hasCondition = true;
+        }
+
+        if (maxPrice != null) {
+            whereClause.append(hasCondition ? " AND" : " WHERE");
+            whereClause.append(" price <= ?");
+            params.add(maxPrice);
+        }
+
+        // 1. 전체 개수 조회
+        long totalItems = countBooks(whereClause.toString(), params);
+
+        // 2. 페이징된 데이터 조회
+        StringBuilder sql = new StringBuilder("SELECT bookid, bookname, publisher, price FROM Book");
+        sql.append(whereClause);
+        sql.append(" ORDER BY ")
+           .append(resolveSortColumn(pageRequest.getSortBy()))
+           .append(" ")
+           .append(pageRequest.getDirection());
+        sql.append(" LIMIT ? OFFSET ?");
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(sql.toString());
+
+            // WHERE 조건 파라미터 설정
+            for (int i = 0; i < params.size(); i++) {
+                pstmt.setObject(i + 1, params.get(i));
+            }
+
+            // LIMIT, OFFSET 파라미터 설정
+            pstmt.setInt(params.size() + 1, pageRequest.getPageSize());
+            pstmt.setInt(params.size() + 2, pageRequest.getOffset());
+
+            SqlLogger.logQuery(sql.toString(), params.toArray());
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Book book = new Book();
+                book.setBookid(rs.getInt("bookid"));
+                book.setBookname(rs.getString("bookname"));
+                book.setPublisher(rs.getString("publisher"));
+                book.setPrice(rs.getInt("price"));
+                books.add(book);
+            }
+        } finally {
+            DBConnection.close(conn, pstmt, rs);
+        }
+
+        // 3. PageResponse 생성
+        return new PageResponse<>(books, pageRequest.getPage(), pageRequest.getPageSize(), totalItems);
+    }
+
+    /**
+     * 조건에 맞는 도서 전체 개수 조회
+     *
+     * @param whereClause WHERE 조건절 (예: " WHERE bookname LIKE ?")
+     * @param params PreparedStatement 파라미터 리스트
+     * @return 전체 도서 개수
+     */
+    private long countBooks(String whereClause, List<Object> params) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) as total FROM Book");
+        sql.append(whereClause);
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(sql.toString());
+
+            for (int i = 0; i < params.size(); i++) {
+                pstmt.setObject(i + 1, params.get(i));
+            }
+
+            SqlLogger.logQuery(sql.toString(), params.toArray());
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getLong("total");
+            }
+        } finally {
+            DBConnection.close(conn, pstmt, rs);
+        }
+
+        return 0;
     }
 
     /**

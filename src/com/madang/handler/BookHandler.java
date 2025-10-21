@@ -2,6 +2,8 @@ package com.madang.handler;
 
 import com.madang.dao.BookDAO;
 import com.madang.model.Book;
+import com.madang.model.PageRequest;
+import com.madang.model.PageResponse;
 import com.madang.server.ApiHandler;
 
 import java.util.List;
@@ -50,8 +52,24 @@ public class BookHandler extends ApiHandler {
                 String sortBy = params.get("sortBy");
                 String direction = params.get("direction");
 
-                List<Book> books = bookDAO.getBooks(title, publisherFilter, minPrice, maxPrice, sortBy, direction);
-                return successResponse(toJsonArray(books));
+                // 페이지네이션 파라미터 확인
+                String pageParam = params.get("page");
+                String pageSizeParam = params.get("pageSize");
+
+                // 페이지네이션 사용 여부 결정
+                if (pageParam != null || pageSizeParam != null) {
+                    // 페이지네이션 사용
+                    int page = parseInteger(pageParam) != null ? parseInteger(pageParam) : 1;
+                    int pageSize = parseInteger(pageSizeParam) != null ? parseInteger(pageSizeParam) : 20;
+
+                    PageRequest pageRequest = new PageRequest(page, pageSize, sortBy, direction);
+                    PageResponse<Book> pageResponse = bookDAO.getBooksPaged(pageRequest, title, publisherFilter, minPrice, maxPrice);
+                    return successResponse(pageResponseToJson(pageResponse));
+                } else {
+                    // 기존 방식 (하위 호환성 유지)
+                    List<Book> books = bookDAO.getBooks(title, publisherFilter, minPrice, maxPrice, sortBy, direction);
+                    return successResponse(toJsonArray(books));
+                }
         }
     }
 
@@ -162,6 +180,22 @@ public class BookHandler extends ApiHandler {
                 sb.append(value);
             }
         }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    /**
+     * PageResponse를 JSON 문자열로 변환
+     */
+    private String pageResponseToJson(PageResponse<Book> pageResponse) {
+        StringBuilder sb = new StringBuilder("{");
+        sb.append("\"items\":").append(toJsonArray(pageResponse.getItems())).append(",");
+        sb.append("\"page\":").append(pageResponse.getPage()).append(",");
+        sb.append("\"pageSize\":").append(pageResponse.getPageSize()).append(",");
+        sb.append("\"totalItems\":").append(pageResponse.getTotalItems()).append(",");
+        sb.append("\"totalPages\":").append(pageResponse.getTotalPages()).append(",");
+        sb.append("\"hasNext\":").append(pageResponse.isHasNext()).append(",");
+        sb.append("\"hasPrevious\":").append(pageResponse.isHasPrevious());
         sb.append("}");
         return sb.toString();
     }

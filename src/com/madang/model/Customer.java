@@ -8,6 +8,7 @@ public class Customer {
     private String name;
     private String address;
     private String phone;
+    private String role;  // customer, manager, publisher, admin
 
     public Customer() {}
 
@@ -16,6 +17,15 @@ public class Customer {
         this.name = name;
         this.address = address;
         this.phone = phone;
+        this.role = "customer";  // 기본값
+    }
+
+    public Customer(int custid, String name, String address, String phone, String role) {
+        this.custid = custid;
+        this.name = name;
+        this.address = address;
+        this.phone = phone;
+        this.role = role;
     }
 
     public int getCustid() {
@@ -50,13 +60,21 @@ public class Customer {
         this.phone = phone;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
     /**
      * JSON 형식으로 변환
      */
     public String toJson() {
         return String.format(
-            "{\"custid\":%d,\"name\":\"%s\",\"address\":\"%s\",\"phone\":\"%s\"}",
-            custid, escapeJson(name), escapeJson(address), escapeJson(phone)
+            "{\"custid\":%d,\"name\":\"%s\",\"address\":\"%s\",\"phone\":\"%s\",\"role\":\"%s\"}",
+            custid, escapeJson(name), escapeJson(address), escapeJson(phone), escapeJson(role != null ? role : "customer")
         );
     }
 

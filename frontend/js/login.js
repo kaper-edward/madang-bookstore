@@ -1,6 +1,10 @@
 let loginCustomers = [];
 let loginSort = { column: 'name', direction: 'asc' };
 let loginFilter = '';
+let loginCurrentPage = 1;
+let loginPageSize = 10;
+let loginTotalPages = 1;
+let loginTotalItems = 0;
 
 async function initLoginPage() {
   setupLoginEvents();
@@ -15,6 +19,7 @@ function setupLoginEvents() {
       event.preventDefault();
       const input = document.getElementById('login-filter');
       loginFilter = input ? input.value.trim() : '';
+      loginCurrentPage = 1;
       loadLoginCustomers();
     });
   }
@@ -31,10 +36,31 @@ function setupLoginEvents() {
         loginSort.direction = 'asc';
       }
 
+      loginCurrentPage = 1;
       updateLoginSortIndicators();
       loadLoginCustomers();
     });
   });
+
+  // 페이지네이션 이벤트 리스너
+  const btnFirst = document.getElementById('login-btn-first');
+  const btnPrev = document.getElementById('login-btn-prev');
+  const btnNext = document.getElementById('login-btn-next');
+  const btnLast = document.getElementById('login-btn-last');
+  const pageSizeSelect = document.getElementById('login-page-size');
+
+  if (btnFirst) btnFirst.addEventListener('click', () => goToLoginPage(1));
+  if (btnPrev) btnPrev.addEventListener('click', () => goToLoginPage(loginCurrentPage - 1));
+  if (btnNext) btnNext.addEventListener('click', () => goToLoginPage(loginCurrentPage + 1));
+  if (btnLast) btnLast.addEventListener('click', () => goToLoginPage(loginTotalPages));
+
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener('change', (e) => {
+      loginPageSize = parseInt(e.target.value);
+      loginCurrentPage = 1;
+      loadLoginCustomers();
+    });
+  }
 
   const signupForm = document.getElementById('signup-form');
   if (signupForm) {
@@ -77,7 +103,9 @@ async function loadLoginCustomers() {
     const params = new URLSearchParams({
       action: 'list',
       sortBy: loginSort.column,
-      direction: loginSort.direction
+      direction: loginSort.direction,
+      page: loginCurrentPage,
+      pageSize: loginPageSize
     });
 
     if (loginFilter) {
@@ -85,8 +113,18 @@ async function loadLoginCustomers() {
     }
 
     const response = await fetchAPI(`/api/customers?${params.toString()}`);
-    loginCustomers = response.data || [];
+
+    if (response.data && response.data.items) {
+      loginCustomers = response.data.items || [];
+      loginTotalPages = response.data.totalPages || 1;
+      loginTotalItems = response.data.totalItems || 0;
+      loginCurrentPage = response.data.page || 1;
+    } else {
+      loginCustomers = response.data || [];
+    }
+
     renderLoginTable();
+    updateLoginPaginationUI();
   } catch (error) {
     const tbody = document.getElementById('login-table-body');
     if (tbody) {
@@ -137,6 +175,56 @@ function updateLoginSortIndicators() {
       th.classList.add(loginSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
     }
   });
+}
+
+function goToLoginPage(page) {
+  if (page < 1 || page > loginTotalPages || page === loginCurrentPage) return;
+  loginCurrentPage = page;
+  loadLoginCustomers();
+}
+
+function updateLoginPaginationUI() {
+  const pageInfo = document.getElementById('login-page-info');
+  const itemsInfo = document.getElementById('login-items-info');
+  const btnFirst = document.getElementById('login-btn-first');
+  const btnPrev = document.getElementById('login-btn-prev');
+  const btnNext = document.getElementById('login-btn-next');
+  const btnLast = document.getElementById('login-btn-last');
+
+  if (pageInfo) pageInfo.textContent = `페이지 ${loginCurrentPage} / ${loginTotalPages}`;
+  if (itemsInfo) itemsInfo.textContent = `전체 ${loginTotalItems}건`;
+
+  if (btnFirst) btnFirst.disabled = loginCurrentPage === 1;
+  if (btnPrev) btnPrev.disabled = loginCurrentPage === 1;
+  if (btnNext) btnNext.disabled = loginCurrentPage === loginTotalPages;
+  if (btnLast) btnLast.disabled = loginCurrentPage === loginTotalPages;
+
+  renderLoginPageNumbers();
+}
+
+function renderLoginPageNumbers() {
+  const container = document.getElementById('login-page-numbers');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  const maxButtons = 5;
+  let startPage = Math.max(1, loginCurrentPage - Math.floor(maxButtons / 2));
+  let endPage = Math.min(loginTotalPages, startPage + maxButtons - 1);
+
+  if (endPage - startPage < maxButtons - 1) {
+    startPage = Math.max(1, endPage - maxButtons + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    btn.className = i === loginCurrentPage
+      ? 'px-3 py-1.5 rounded-lg bg-primary-500 text-white font-medium text-sm'
+      : 'px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition text-sm font-medium';
+    btn.addEventListener('click', () => goToLoginPage(i));
+    container.appendChild(btn);
+  }
 }
 
 function escapeHtml(value) {

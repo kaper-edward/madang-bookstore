@@ -83,6 +83,45 @@
             </tbody>
           </table>
         </div>
+
+        <!-- 페이지네이션 -->
+        <div id="pagination-container" class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-white/10">
+          <div class="text-sm text-slate-300">
+            <span id="page-info">페이지 1 / 1</span>
+            <span class="mx-2">·</span>
+            <span id="items-info">전체 0건</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="btn-first-page" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>
+              ⏮️ 처음
+            </button>
+            <button id="btn-prev-page" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>
+              ◀ 이전
+            </button>
+
+            <div id="page-numbers" class="flex items-center gap-1">
+              <!-- 페이지 번호 버튼들이 동적으로 추가됩니다 -->
+            </div>
+
+            <button id="btn-next-page" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>
+              다음 ▶
+            </button>
+            <button id="btn-last-page" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>
+              마지막 ⏭️
+            </button>
+          </div>
+
+          <div class="text-sm text-slate-300 flex items-center gap-2">
+            <label for="page-size-select" class="text-slate-400">페이지당:</label>
+            <select id="page-size-select" class="input py-1.5 px-2 w-20 text-sm">
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </div>
       </section>
     </main>
 

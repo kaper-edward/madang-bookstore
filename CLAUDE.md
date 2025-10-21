@@ -24,13 +24,30 @@ Educational online bookstore system ("Madang Bookstore") for learning CRUD SQL o
 # Compile all Java files
 javac -d bin -cp "lib/*" $(find src -name "*.java")
 
-# Run server (from project root)
+# Run server with environment variables (recommended)
+./start-server.sh
+
+# Or run server directly (uses default values from DBConnection.java)
 java -cp "bin:lib/*" com.madang.server.MadangServer
 ```
 
 ### Database Connection
 
 **Connection Details** (DBConnection.java):
+
+DBConnection.java supports environment variables for secure credential management:
+
+**Environment Variables** (recommended for production):
+- `DB_URL` - Database URL (default: `jdbc:mysql://localhost:3306/madangdb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true`)
+- `DB_USER` - Database username (default: `madang`)
+- `DB_PASSWORD` - Database password (default: `madang`)
+
+**Setup**:
+1. Copy `.env.example` to `.env`
+2. Update `.env` with your actual credentials
+3. Run server with `./start-server.sh` (automatically loads `.env`)
+
+**Direct credentials** (for development only):
 - URL: `jdbc:mysql://localhost:3306/madangdb`
 - User: `madang`
 - Password: `madang`
@@ -40,6 +57,8 @@ Test database connectivity:
 # Use MCP MySQL server tools or direct MySQL client
 mysql -u madang -p madangdb
 ```
+
+**Security Note**: `.env` file is in `.gitignore` and will not be committed to Git.
 
 ### MCP MySQL Server (Optional Development Tool)
 
@@ -111,7 +130,8 @@ Database (MySQL madangdb)
 - Match database table structure exactly
 
 **Utility** (`src/com/madang/util/`):
-- `DBConnection.java` - Manages JDBC connections
+- `DBConnection.java` - Manages JDBC connections with HikariCP Connection Pool (max 10 connections, min 2 idle)
+- `SessionManager.java` - In-memory session management for user authentication (2-hour timeout)
 - `SqlLogger.java` - Optional SQL query logging
 
 ### Frontend Structure
@@ -258,6 +278,8 @@ See `sql/queries.sql` for comprehensive SQL examples.
 - address VARCHAR(50)
 - phone VARCHAR(20)
 - role VARCHAR(20) NOT NULL DEFAULT 'customer'
+  - Allowed values: 'customer', 'publisher', 'admin', 'manager'
+  - CHECK constraint: `chk_customer_role`
 
 **Orders**:
 - orderid INT PRIMARY KEY AUTO_INCREMENT
@@ -270,25 +292,95 @@ Foreign key constraints enforced. No additional tables or columns allowed.
 
 ## Security Considerations
 
-**Educational Level** (current implementation):
+**Implemented Security Features**:
 - SQL injection prevention: PreparedStatement only
 - XSS prevention: Frontend uses textContent over innerHTML where possible
-- Basic session: localStorage stores custid (not production-ready)
-- CORS: Permissive for development
+- **Server-side session management**: In-memory SessionManager with 2-hour timeout
+- **Session-based authentication**: X-Session-Id header with UUID tokens
+- **Server-side role verification**: ApiHandler provides requireAdmin(), requireRole(), requireSelfOrAdmin() methods
+- Connection pool security: HikariCP with connection limits
+- Environment variable support: Credentials stored in .env (Git-ignored)
+- CORS: Permissive for development (includes X-Session-Id header)
 
-**Production Upgrades** (not implemented):
-- Password hashing (BCrypt)
-- JWT authentication
+**Production Upgrades** (not yet implemented):
+- Password hashing (BCrypt) - currently uses simple custid-based login
+- Persistent session storage (Redis/Database) - currently in-memory only
+- JWT authentication - alternative to current session approach
 - HTTPS
 - CSRF tokens
 - Input validation strengthening
+- Rate limiting
+
+## Role-Based Access Control (RBAC)
+
+The system implements role-based access control through the `role` field in the Customer table.
+
+### Defined Roles
+
+| Role | Description | Key Permissions |
+|------|-------------|-----------------|
+| **customer** | Default role for all users | Browse books, place orders, view own orders |
+| **manager** | Operations manager | All customer permissions + book management, all orders, statistics |
+| **publisher** | Publishing company staff | Customer permissions + manage own publisher's books (partially implemented) |
+| **admin** | System administrator | Full system access, user management, role assignment |
+
+### Admin Accounts
+
+Test accounts for development:
+- **ID 1** (박지성): admin
+- **ID 2** (김연아): admin
+- **ID 3-5** (김연경, 추신수, 박세리): manager
+
+### Role Implementation
+
+**Frontend**: Role-based UI rendering using `localStorage.getItem('role')`
+```javascript
+const userRole = localStorage.getItem('role');
+if (userRole === 'admin' || userRole === 'manager') {
+    // Show admin features
+}
+```
+
+**Backend** (recommended for production):
+```java
+// Add role validation in handlers
+String role = params.get("role");
+if (!"admin".equals(role) && !"manager".equals(role)) {
+    return errorResponse("Unauthorized", 403);
+}
+```
+
+**Important**: Current implementation uses client-side role checking for simplicity. Production systems should validate roles server-side.
+
+See `docs/rbac.md` for complete documentation.
 
 ## File Generation Scripts
 
-Located in `gen/` directory - Python scripts for generating test data:
+Located in `gen/` directory - Python scripts for generating test data and managing roles:
+
+**Data Generation**:
 - `gen_book_mysql.py` - Generate book test data
 - `gen_cust_mysql.py` - Generate customer test data
 - `gen_orders_mysql.py` - Generate order test data
+
+**Role Management**:
+- `alter_role_constraint.py` - Modify Customer table CHECK constraint for roles
+- `update_roles.py` - Assign admin/manager roles to specific users
+
+Usage examples:
+```bash
+# Generate 1000 books
+python3 gen/gen_book_mysql.py -n 1000
+
+# Generate 100 customers
+python3 gen/gen_cust_mysql.py -n 100
+
+# Generate 2000 orders
+python3 gen/gen_orders_mysql.py -n 2000
+
+# Update user roles
+python3 gen/update_roles.py
+```
 
 These are utilities, not part of the main application.
 
@@ -315,4 +407,5 @@ Trade-off: Lower production capability but much simpler for educational purposes
 - Architecture details: `docs/architecture.md`
 - Page-by-page design specs: `docs/page-design.md`
 - Simple server guide: `docs/simple-server-guide.md`
+- Role-Based Access Control: `docs/rbac.md`
 - SQL learning queries: `sql/queries.sql`

@@ -34,13 +34,13 @@
         </div>
       </section>
 
-      <section class="grid lg:grid-cols-3 gap-6">
-        <div id="order-stats" class="glass-panel p-6 lg:col-span-1 space-y-4">
+      <section class="space-y-6">
+        <div id="order-stats" class="glass-panel p-6 space-y-4">
           <h2 class="text-xl font-semibold">주문 요약</h2>
           <p class="text-slate-300 text-sm">데이터를 불러오는 중입니다...</p>
         </div>
 
-        <div class="glass-panel p-6 lg:col-span-2 space-y-6">
+        <div class="glass-panel p-6 space-y-6">
           <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <h2 class="text-xl font-semibold">주문 목록</h2>
             <div class="text-sm text-slate-300">컬럼을 클릭하면 SQL ORDER BY로 정렬합니다.</div>
@@ -63,6 +63,27 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- 페이지네이션 -->
+          <div id="order-pagination" class="flex items-center justify-between gap-4 pt-4 border-t border-white/10 text-sm">
+            <div class="text-slate-300">
+              <span id="order-page-info">페이지 1 / 1</span>
+              <span class="mx-2">·</span>
+              <span id="order-items-info">전체 0건</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="order-btn-first" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>⏮️</button>
+              <button id="order-btn-prev" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>◀</button>
+              <div id="order-page-numbers" class="flex items-center gap-1"></div>
+              <button id="order-btn-next" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>▶</button>
+              <button id="order-btn-last" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>⏭️</button>
+            </div>
+            <select id="order-page-size" class="input py-1.5 px-2 w-20 text-sm">
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
           </div>
         </div>
       </section>

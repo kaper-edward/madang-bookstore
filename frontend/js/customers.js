@@ -1,9 +1,14 @@
 let customersCache = [];
 let customerSort = { column: 'custid', direction: 'asc' };
 let customerFilters = { name: '', phone: '', address: '' };
+let customerCurrentPage = 1;
+let customerPageSize = 10;
+let customerTotalPages = 1;
+let customerTotalItems = 0;
 
 async function initCustomersAdminPage() {
   setupCustomerAdminEvents();
+  setupCustomerPaginationEvents();
   updateCustomerSortIndicators();
   await loadCustomers();
 }
@@ -21,6 +26,7 @@ function setupCustomerAdminEvents() {
         customerSort.direction = 'asc';
       }
 
+      customerCurrentPage = 1;
       updateCustomerSortIndicators();
       loadCustomers();
     });
@@ -35,6 +41,7 @@ function setupCustomerAdminEvents() {
         phone: valueOrEmpty('filter-phone'),
         address: valueOrEmpty('filter-address')
       };
+      customerCurrentPage = 1;
       loadCustomers();
     });
   }
@@ -47,6 +54,7 @@ function setupCustomerAdminEvents() {
         const input = document.getElementById(id);
         if (input) input.value = '';
       });
+      customerCurrentPage = 1;
       loadCustomers();
     });
   }
@@ -130,13 +138,36 @@ function setupCustomerAdminEvents() {
   }
 }
 
+function setupCustomerPaginationEvents() {
+  const btnFirst = document.getElementById('customer-btn-first');
+  const btnPrev = document.getElementById('customer-btn-prev');
+  const btnNext = document.getElementById('customer-btn-next');
+  const btnLast = document.getElementById('customer-btn-last');
+  const pageSizeSelect = document.getElementById('customer-page-size');
+
+  if (btnFirst) btnFirst.addEventListener('click', () => goToCustomerPage(1));
+  if (btnPrev) btnPrev.addEventListener('click', () => goToCustomerPage(customerCurrentPage - 1));
+  if (btnNext) btnNext.addEventListener('click', () => goToCustomerPage(customerCurrentPage + 1));
+  if (btnLast) btnLast.addEventListener('click', () => goToCustomerPage(customerTotalPages));
+
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener('change', (e) => {
+      customerPageSize = parseInt(e.target.value);
+      customerCurrentPage = 1;
+      loadCustomers();
+    });
+  }
+}
+
 async function loadCustomers() {
   try {
     toggleLoadingSpinner(true);
     const params = new URLSearchParams({
       action: 'list',
       sortBy: customerSort.column,
-      direction: customerSort.direction
+      direction: customerSort.direction,
+      page: customerCurrentPage,
+      pageSize: customerPageSize
     });
 
     if (customerFilters.name) {
@@ -150,8 +181,18 @@ async function loadCustomers() {
     }
 
     const response = await fetchAPI(`/api/customers?${params.toString()}`);
-    customersCache = response.data || [];
+
+    if (response.data && response.data.items) {
+      customersCache = response.data.items || [];
+      customerTotalPages = response.data.totalPages || 1;
+      customerTotalItems = response.data.totalItems || 0;
+      customerCurrentPage = response.data.page || 1;
+    } else {
+      customersCache = response.data || [];
+    }
+
     renderCustomerTable();
+    updateCustomerPaginationUI();
   } catch (error) {
     const tbody = document.getElementById('customer-table-body');
     if (tbody) {
@@ -246,6 +287,56 @@ function updateCustomerSortIndicators() {
       th.classList.add(customerSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
     }
   });
+}
+
+function goToCustomerPage(page) {
+  if (page < 1 || page > customerTotalPages || page === customerCurrentPage) return;
+  customerCurrentPage = page;
+  loadCustomers();
+}
+
+function updateCustomerPaginationUI() {
+  const pageInfo = document.getElementById('customer-page-info');
+  const itemsInfo = document.getElementById('customer-items-info');
+  const btnFirst = document.getElementById('customer-btn-first');
+  const btnPrev = document.getElementById('customer-btn-prev');
+  const btnNext = document.getElementById('customer-btn-next');
+  const btnLast = document.getElementById('customer-btn-last');
+
+  if (pageInfo) pageInfo.textContent = `페이지 ${customerCurrentPage} / ${customerTotalPages}`;
+  if (itemsInfo) itemsInfo.textContent = `전체 ${customerTotalItems}건`;
+
+  if (btnFirst) btnFirst.disabled = customerCurrentPage === 1;
+  if (btnPrev) btnPrev.disabled = customerCurrentPage === 1;
+  if (btnNext) btnNext.disabled = customerCurrentPage === customerTotalPages;
+  if (btnLast) btnLast.disabled = customerCurrentPage === customerTotalPages;
+
+  renderCustomerPageNumbers();
+}
+
+function renderCustomerPageNumbers() {
+  const container = document.getElementById('customer-page-numbers');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  const maxButtons = 5;
+  let startPage = Math.max(1, customerCurrentPage - Math.floor(maxButtons / 2));
+  let endPage = Math.min(customerTotalPages, startPage + maxButtons - 1);
+
+  if (endPage - startPage < maxButtons - 1) {
+    startPage = Math.max(1, endPage - maxButtons + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    btn.className = i === customerCurrentPage
+      ? 'px-3 py-1.5 rounded-lg bg-primary-500 text-white font-medium text-sm'
+      : 'px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition text-sm font-medium';
+    btn.addEventListener('click', () => goToCustomerPage(i));
+    container.appendChild(btn);
+  }
 }
 
 function valueOrEmpty(id) {

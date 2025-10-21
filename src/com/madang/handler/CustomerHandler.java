@@ -2,7 +2,10 @@ package com.madang.handler;
 
 import com.madang.dao.CustomerDAO;
 import com.madang.model.Customer;
+import com.madang.model.PageRequest;
+import com.madang.model.PageResponse;
 import com.madang.server.ApiHandler;
+import com.madang.util.SessionManager;
 
 import java.util.List;
 import java.util.Map;
@@ -33,13 +36,54 @@ public class CustomerHandler extends ApiHandler {
         String sortBy = params.get("sortBy");
         String direction = params.get("direction");
 
-        List<Customer> customers = customerDAO.getCustomers(name, phone, address, sortBy, direction);
-        return successResponse(toJsonArray(customers));
+        // 페이지네이션 파라미터 확인
+        String pageParam = params.get("page");
+        String pageSizeParam = params.get("pageSize");
+
+        // 페이지네이션 사용 여부 결정
+        if (pageParam != null || pageSizeParam != null) {
+            int page = parseInteger(pageParam) != null ? parseInteger(pageParam) : 1;
+            int pageSize = parseInteger(pageSizeParam) != null ? parseInteger(pageSizeParam) : 10;
+
+            PageRequest pageRequest = new PageRequest(page, pageSize, sortBy, direction);
+            PageResponse<Customer> pageResponse = customerDAO.getCustomersPaged(pageRequest, name, phone, address);
+            return successResponse(pageResponseToJson(pageResponse));
+        } else {
+            // 기존 방식 (하위 호환성 유지)
+            List<Customer> customers = customerDAO.getCustomers(name, phone, address, sortBy, direction);
+            return successResponse(toJsonArray(customers));
+        }
     }
 
     @Override
     protected String handlePost(Map<String, String> params, String body) throws Exception {
         String action = params.getOrDefault("action", "create");
+
+        if ("login".equals(action)) {
+            int custId = requireJsonInt(body, "custid");
+            Customer customer = customerDAO.login(custId);
+
+            if (customer == null) {
+                return errorResponse("고객을 찾을 수 없습니다.");
+            }
+
+            // 세션 생성
+            String sessionId = SessionManager.createSession(
+                customer.getCustid(),
+                customer.getName(),
+                customer.getRole()
+            );
+
+            // 세션 ID를 응답 헤더에 추가
+            currentExchange.getResponseHeaders().set("X-Session-Id", sessionId);
+
+            // 고객 정보와 세션 ID 반환
+            String response = String.format(
+                "{\"customer\":%s,\"sessionId\":\"%s\"}",
+                customer.toJson(), sessionId
+            );
+            return successResponse(response);
+        }
 
         if ("create".equals(action)) {
             String name = requireJsonString(body, "name");
@@ -106,5 +150,37 @@ public class CustomerHandler extends ApiHandler {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    private String pageResponseToJson(PageResponse<Customer> pageResponse) {
+        StringBuilder itemsJson = new StringBuilder("[");
+        List<Customer> items = pageResponse.getItems();
+        for (int i = 0; i < items.size(); i++) {
+            if (i > 0) itemsJson.append(",");
+            itemsJson.append(items.get(i).toJson());
+        }
+        itemsJson.append("]");
+
+        return String.format(
+            "{\"items\":%s,\"page\":%d,\"pageSize\":%d,\"totalItems\":%d,\"totalPages\":%d,\"hasNext\":%b,\"hasPrevious\":%b}",
+            itemsJson.toString(),
+            pageResponse.getPage(),
+            pageResponse.getPageSize(),
+            pageResponse.getTotalItems(),
+            pageResponse.getTotalPages(),
+            pageResponse.isHasNext(),
+            pageResponse.isHasPrevious()
+        );
+    }
+
+    private Integer parseInteger(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

@@ -12,6 +12,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
+import com.madang.util.SessionManager;
+import com.madang.util.SessionManager.Session;
+
 /**
  * API 핸들러 기본 클래스
  * 모든 API 핸들러는 이 클래스를 상속받아 구현
@@ -19,9 +22,11 @@ import com.google.gson.JsonSyntaxException;
 public abstract class ApiHandler implements HttpHandler {
 
     private static final Gson gson = new Gson();
+    protected HttpExchange currentExchange;  // 현재 요청의 HttpExchange (권한 검증용)
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        this.currentExchange = exchange;  // 하위 클래스에서 권한 검증에 사용
         // CORS 헤더 설정
         setCorsHeaders(exchange);
 
@@ -147,7 +152,8 @@ public abstract class ApiHandler implements HttpHandler {
         Headers headers = exchange.getResponseHeaders();
         headers.set("Access-Control-Allow-Origin", "*");
         headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        headers.set("Access-Control-Allow-Headers", "Content-Type");
+        headers.set("Access-Control-Allow-Headers", "Content-Type, X-Session-Id");
+        headers.set("Access-Control-Expose-Headers", "X-Session-Id");
     }
 
     /**
@@ -257,4 +263,88 @@ public abstract class ApiHandler implements HttpHandler {
     // private String unescapeJson(String value) {
     //     return value.replace("\\\\\"", "\"").replace("\\\\\\\\", "\\");
     // }
+
+    /**
+     * HTTP 헤더에서 세션 ID 추출
+     */
+    protected String getSessionId() {
+        Headers headers = currentExchange.getRequestHeaders();
+        List<String> sessionHeaders = headers.get("X-Session-Id");
+        if (sessionHeaders != null && !sessionHeaders.isEmpty()) {
+            return sessionHeaders.get(0);
+        }
+        return null;
+    }
+
+    /**
+     * 세션 조회
+     */
+    protected Session getSession() {
+        String sessionId = getSessionId();
+        return SessionManager.getSession(sessionId);
+    }
+
+    /**
+     * 권한 검증: 관리자 또는 매니저만 허용
+     * @throws IllegalAccessException 권한이 없으면 예외 발생
+     */
+    protected void requireAdmin() throws IllegalAccessException {
+        Session session = getSession();
+        if (session == null) {
+            throw new IllegalAccessException("로그인이 필요합니다.");
+        }
+
+        String role = session.getRole();
+        if (!"admin".equals(role) && !"manager".equals(role)) {
+            throw new IllegalAccessException("관리자 권한이 필요합니다.");
+        }
+    }
+
+    /**
+     * 권한 검증: 특정 role만 허용
+     * @throws IllegalAccessException 권한이 없으면 예외 발생
+     */
+    protected void requireRole(String... allowedRoles) throws IllegalAccessException {
+        Session session = getSession();
+        if (session == null) {
+            throw new IllegalAccessException("로그인이 필요합니다.");
+        }
+
+        String role = session.getRole();
+        for (String allowedRole : allowedRoles) {
+            if (allowedRole.equals(role)) {
+                return;
+            }
+        }
+
+        throw new IllegalAccessException("권한이 부족합니다.");
+    }
+
+    /**
+     * 권한 검증: 본인 또는 관리자만 허용
+     * @throws IllegalAccessException 권한이 없으면 예외 발생
+     */
+    protected void requireSelfOrAdmin(int targetCustid) throws IllegalAccessException {
+        Session session = getSession();
+        if (session == null) {
+            throw new IllegalAccessException("로그인이 필요합니다.");
+        }
+
+        String role = session.getRole();
+        int custid = session.getCustid();
+
+        // 관리자/매니저이거나 본인인 경우 허용
+        if ("admin".equals(role) || "manager".equals(role) || custid == targetCustid) {
+            return;
+        }
+
+        throw new IllegalAccessException("권한이 부족합니다.");
+    }
+
+    /**
+     * 로그인 여부 확인
+     */
+    protected boolean isLoggedIn() {
+        return getSession() != null;
+    }
 }

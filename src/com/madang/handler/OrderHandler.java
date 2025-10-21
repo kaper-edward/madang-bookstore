@@ -2,6 +2,8 @@ package com.madang.handler;
 
 import com.madang.dao.OrderDAO;
 import com.madang.model.Order;
+import com.madang.model.PageRequest;
+import com.madang.model.PageResponse;
 import com.madang.server.ApiHandler;
 
 import java.util.List;
@@ -22,8 +24,24 @@ public class OrderHandler extends ApiHandler {
             int custId = Integer.parseInt(params.get("custid"));
             String sortBy = params.get("sortBy");
             String direction = params.get("direction");
-            List<Order> orders = orderDAO.getOrdersByCustomer(custId, sortBy, direction);
-            return successResponse(toJsonArray(orders));
+
+            // 페이지네이션 파라미터 확인
+            String pageParam = params.get("page");
+            String pageSizeParam = params.get("pageSize");
+
+            // 페이지네이션 사용 여부 결정
+            if (pageParam != null || pageSizeParam != null) {
+                int page = parseInteger(pageParam) != null ? parseInteger(pageParam) : 1;
+                int pageSize = parseInteger(pageSizeParam) != null ? parseInteger(pageSizeParam) : 10;
+
+                PageRequest pageRequest = new PageRequest(page, pageSize, sortBy, direction);
+                PageResponse<Order> pageResponse = orderDAO.getOrdersByCustomerPaged(pageRequest, custId);
+                return successResponse(pageResponseToJson(pageResponse));
+            } else {
+                // 기존 방식 (하위 호환성 유지)
+                List<Order> orders = orderDAO.getOrdersByCustomer(custId, sortBy, direction);
+                return successResponse(toJsonArray(orders));
+            }
         }
 
         if ("stats".equals(action)) {
@@ -111,6 +129,27 @@ public class OrderHandler extends ApiHandler {
         return sb.toString();
     }
 
+    private String pageResponseToJson(PageResponse<Order> pageResponse) {
+        StringBuilder itemsJson = new StringBuilder("[");
+        List<Order> items = pageResponse.getItems();
+        for (int i = 0; i < items.size(); i++) {
+            if (i > 0) itemsJson.append(",");
+            itemsJson.append(items.get(i).toJsonWithDetails());
+        }
+        itemsJson.append("]");
+
+        return String.format(
+            "{\"items\":%s,\"page\":%d,\"pageSize\":%d,\"totalItems\":%d,\"totalPages\":%d,\"hasNext\":%b,\"hasPrevious\":%b}",
+            itemsJson.toString(),
+            pageResponse.getPage(),
+            pageResponse.getPageSize(),
+            pageResponse.getTotalItems(),
+            pageResponse.getTotalPages(),
+            pageResponse.isHasNext(),
+            pageResponse.isHasPrevious()
+        );
+    }
+
     private String mapToJson(Map<String, Object> map) {
         StringBuilder sb = new StringBuilder("{");
         boolean first = true;
@@ -137,5 +176,16 @@ public class OrderHandler extends ApiHandler {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    private Integer parseInteger(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

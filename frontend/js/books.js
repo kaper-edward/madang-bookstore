@@ -1,6 +1,19 @@
 let booksCache = [];
 let bookSort = { column: 'bookid', direction: 'asc' };
 let bookFilters = { title: '', publisher: '', minPrice: '', maxPrice: '' };
+let currentPage = 1;
+let pageSize = 10;
+let totalPages = 1;
+let totalItems = 0;
+let searchDebounceTimer = null;
+
+// Debounce 함수: 연속된 이벤트를 묶어서 마지막 이벤트만 실행
+function debounce(func, delay) {
+  return function (...args) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => func.apply(this, args), delay);
+  };
+}
 
 async function initBooksPage() {
   checkLoginStatus();
@@ -26,6 +39,7 @@ function setupBooksEventListeners() {
         bookSort.direction = 'asc';
       }
 
+      currentPage = 1; // 정렬 변경 시 첫 페이지로
       updateBookSortIndicators();
       loadBooks();
     });
@@ -39,6 +53,7 @@ function setupBooksEventListeners() {
       bookFilters.publisher = valueOrEmpty('filter-publisher');
       bookFilters.minPrice = numericOrEmpty('filter-min-price');
       bookFilters.maxPrice = numericOrEmpty('filter-max-price');
+      currentPage = 1; // 필터 변경 시 첫 페이지로
       loadBooks();
     });
   }
@@ -51,6 +66,7 @@ function setupBooksEventListeners() {
         const input = document.getElementById(id);
         if (input) input.value = '';
       });
+      currentPage = 1; // 필터 초기화 시 첫 페이지로
       loadBooks();
     });
   }
@@ -134,6 +150,66 @@ function setupBooksEventListeners() {
       }
     });
   }
+
+  // 페이지네이션 이벤트 리스너
+  const firstPageBtn = document.getElementById('btn-first-page');
+  if (firstPageBtn) {
+    firstPageBtn.addEventListener('click', () => goToPage(1));
+  }
+
+  const prevPageBtn = document.getElementById('btn-prev-page');
+  if (prevPageBtn) {
+    prevPageBtn.addEventListener('click', () => goToPage(currentPage - 1));
+  }
+
+  const nextPageBtn = document.getElementById('btn-next-page');
+  if (nextPageBtn) {
+    nextPageBtn.addEventListener('click', () => goToPage(currentPage + 1));
+  }
+
+  const lastPageBtn = document.getElementById('btn-last-page');
+  if (lastPageBtn) {
+    lastPageBtn.addEventListener('click', () => goToPage(totalPages));
+  }
+
+  const pageSizeSelect = document.getElementById('page-size-select');
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener('change', (event) => {
+      pageSize = parseInt(event.target.value, 10);
+      currentPage = 1; // 페이지 크기 변경 시 첫 페이지로
+      loadBooks();
+    });
+  }
+
+  // 실시간 검색 (Debounce 적용)
+  const debouncedSearch = debounce(() => {
+    bookFilters.title = valueOrEmpty('filter-title');
+    bookFilters.publisher = valueOrEmpty('filter-publisher');
+    bookFilters.minPrice = numericOrEmpty('filter-min-price');
+    bookFilters.maxPrice = numericOrEmpty('filter-max-price');
+    currentPage = 1;
+    loadBooks();
+  }, 500); // 500ms 대기
+
+  const titleInput = document.getElementById('filter-title');
+  if (titleInput) {
+    titleInput.addEventListener('input', debouncedSearch);
+  }
+
+  const publisherInput = document.getElementById('filter-publisher');
+  if (publisherInput) {
+    publisherInput.addEventListener('input', debouncedSearch);
+  }
+
+  const minPriceInput = document.getElementById('filter-min-price');
+  if (minPriceInput) {
+    minPriceInput.addEventListener('input', debouncedSearch);
+  }
+
+  const maxPriceInput = document.getElementById('filter-max-price');
+  if (maxPriceInput) {
+    maxPriceInput.addEventListener('input', debouncedSearch);
+  }
 }
 
 async function loadBooks() {
@@ -142,7 +218,9 @@ async function loadBooks() {
     const params = new URLSearchParams({
       action: 'list',
       sortBy: bookSort.column,
-      direction: bookSort.direction
+      direction: bookSort.direction,
+      page: currentPage,
+      pageSize: pageSize
     });
 
     if (bookFilters.title) {
@@ -159,9 +237,23 @@ async function loadBooks() {
     }
 
     const response = await fetchAPI(`/api/books?${params.toString()}`);
-    booksCache = response.data || [];
+
+    // PageResponse 처리
+    if (response.data && response.data.items) {
+      booksCache = response.data.items || [];
+      totalPages = response.data.totalPages || 1;
+      totalItems = response.data.totalItems || 0;
+      currentPage = response.data.page || 1;
+    } else {
+      // 기존 방식 (하위 호환성)
+      booksCache = response.data || [];
+      totalPages = 1;
+      totalItems = booksCache.length;
+    }
+
     renderBookTable();
     updateBookCount();
+    updatePaginationUI();
   } catch (error) {
     const tbody = document.getElementById('book-table-body');
     if (tbody) {
@@ -255,8 +347,101 @@ function renderBookTable() {
 function updateBookCount() {
   const countElement = document.getElementById('book-count');
   if (countElement) {
-    countElement.textContent = `총 ${booksCache.length}권`;
+    countElement.textContent = `총 ${totalItems}권`;
   }
+}
+
+function goToPage(page) {
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  loadBooks();
+}
+
+function updatePaginationUI() {
+  // 페이지 정보 업데이트
+  const pageInfo = document.getElementById('page-info');
+  if (pageInfo) {
+    pageInfo.textContent = `페이지 ${currentPage} / ${totalPages}`;
+  }
+
+  const itemsInfo = document.getElementById('items-info');
+  if (itemsInfo) {
+    itemsInfo.textContent = `전체 ${totalItems}건`;
+  }
+
+  // 버튼 활성화/비활성화
+  const firstPageBtn = document.getElementById('btn-first-page');
+  const prevPageBtn = document.getElementById('btn-prev-page');
+  const nextPageBtn = document.getElementById('btn-next-page');
+  const lastPageBtn = document.getElementById('btn-last-page');
+
+  if (firstPageBtn) firstPageBtn.disabled = currentPage === 1;
+  if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
+  if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages;
+  if (lastPageBtn) lastPageBtn.disabled = currentPage === totalPages;
+
+  // 페이지 번호 버튼 렌더링
+  renderPageNumbers();
+}
+
+function renderPageNumbers() {
+  const container = document.getElementById('page-numbers');
+  if (!container) return;
+
+  const maxButtons = 5; // 최대 표시할 페이지 버튼 수
+  let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+  let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+  // startPage 조정 (endPage가 totalPages에 가까울 때)
+  if (endPage - startPage + 1 < maxButtons) {
+    startPage = Math.max(1, endPage - maxButtons + 1);
+  }
+
+  const buttons = [];
+
+  // 첫 페이지 버튼 (startPage가 1이 아닐 때)
+  if (startPage > 1) {
+    buttons.push(`
+      <button class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition text-sm font-medium" onclick="goToPage(1)">
+        1
+      </button>
+    `);
+    if (startPage > 2) {
+      buttons.push(`<span class="px-2 text-slate-400">...</span>`);
+    }
+  }
+
+  // 페이지 번호 버튼들
+  for (let i = startPage; i <= endPage; i++) {
+    const isActive = i === currentPage;
+    buttons.push(`
+      <button
+        class="px-3 py-1.5 rounded-lg transition text-sm font-medium ${
+          isActive
+            ? 'bg-primary-500 text-white'
+            : 'bg-white/5 hover:bg-white/10'
+        }"
+        onclick="goToPage(${i})"
+        ${isActive ? 'disabled' : ''}
+      >
+        ${i}
+      </button>
+    `);
+  }
+
+  // 마지막 페이지 버튼 (endPage가 totalPages가 아닐 때)
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      buttons.push(`<span class="px-2 text-slate-400">...</span>`);
+    }
+    buttons.push(`
+      <button class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition text-sm font-medium" onclick="goToPage(${totalPages})">
+        ${totalPages}
+      </button>
+    `);
+  }
+
+  container.innerHTML = buttons.join('');
 }
 
 function updateBookSortIndicators() {

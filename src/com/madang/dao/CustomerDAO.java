@@ -1,6 +1,8 @@
 package com.madang.dao;
 
 import com.madang.model.Customer;
+import com.madang.model.PageRequest;
+import com.madang.model.PageResponse;
 import com.madang.util.DBConnection;
 import com.madang.util.SqlLogger;
 
@@ -24,7 +26,7 @@ public class CustomerDAO {
         List<Object> params = new ArrayList<>();
 
         StringBuilder sql = new StringBuilder(
-            "SELECT custid, name, address, phone FROM Customer"
+            "SELECT custid, name, address, phone, role FROM Customer"
         );
 
         boolean hasCondition = false;
@@ -74,6 +76,7 @@ public class CustomerDAO {
                 customer.setName(rs.getString("name"));
                 customer.setAddress(rs.getString("address"));
                 customer.setPhone(rs.getString("phone"));
+                customer.setRole(rs.getString("role"));
                 customers.add(customer);
             }
         } finally {
@@ -84,10 +87,127 @@ public class CustomerDAO {
     }
 
     /**
+     * 고객 목록 조회 (페이징 지원)
+     */
+    public PageResponse<Customer> getCustomersPaged(PageRequest pageRequest, String name,
+                                                     String phone, String address) throws SQLException {
+        List<Customer> customers = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+
+        // WHERE 조건 생성
+        StringBuilder whereClause = new StringBuilder();
+        boolean hasCondition = false;
+
+        if (name != null && !name.isBlank()) {
+            whereClause.append(hasCondition ? " AND" : " WHERE");
+            whereClause.append(" name LIKE ?");
+            params.add("%" + name.trim() + "%");
+            hasCondition = true;
+        }
+
+        if (phone != null && !phone.isBlank()) {
+            whereClause.append(hasCondition ? " AND" : " WHERE");
+            whereClause.append(" phone LIKE ?");
+            params.add("%" + phone.trim() + "%");
+            hasCondition = true;
+        }
+
+        if (address != null && !address.isBlank()) {
+            whereClause.append(hasCondition ? " AND" : " WHERE");
+            whereClause.append(" address LIKE ?");
+            params.add("%" + address.trim() + "%");
+        }
+
+        // 1. 전체 개수 조회
+        long totalItems = countCustomers(whereClause.toString(), params);
+
+        // 2. 페이징된 데이터 조회
+        StringBuilder sql = new StringBuilder("SELECT custid, name, address, phone, role FROM Customer");
+        sql.append(whereClause);
+        sql.append(" ORDER BY ")
+           .append(resolveSortColumn(pageRequest.getSortBy()))
+           .append(" ")
+           .append(resolveSortDirection(pageRequest.getDirection()));
+        sql.append(" LIMIT ? OFFSET ?");
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(sql.toString());
+
+            // WHERE 파라미터 바인딩
+            for (int i = 0; i < params.size(); i++) {
+                pstmt.setObject(i + 1, params.get(i));
+            }
+
+            // LIMIT, OFFSET 바인딩
+            pstmt.setInt(params.size() + 1, pageRequest.getPageSize());
+            pstmt.setInt(params.size() + 2, pageRequest.getOffset());
+
+            SqlLogger.logQuery(sql.toString(), params.toArray());
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Customer customer = new Customer();
+                customer.setCustid(rs.getInt("custid"));
+                customer.setName(rs.getString("name"));
+                customer.setAddress(rs.getString("address"));
+                customer.setPhone(rs.getString("phone"));
+                customer.setRole(rs.getString("role"));
+                customers.add(customer);
+            }
+        } finally {
+            DBConnection.close(conn, pstmt, rs);
+        }
+
+        // 3. PageResponse 생성
+        return new PageResponse<>(
+            customers,
+            pageRequest.getPage(),
+            pageRequest.getPageSize(),
+            totalItems
+        );
+    }
+
+    /**
+     * 고객 개수 조회 (필터링 조건 포함)
+     */
+    private long countCustomers(String whereClause, List<Object> params) throws SQLException {
+        String sql = "SELECT COUNT(*) as total FROM Customer" + whereClause;
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+
+            for (int i = 0; i < params.size(); i++) {
+                pstmt.setObject(i + 1, params.get(i));
+            }
+
+            SqlLogger.logQuery(sql, params.toArray());
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getLong("total");
+            }
+        } finally {
+            DBConnection.close(conn, pstmt, rs);
+        }
+
+        return 0;
+    }
+
+    /**
      * 고객 ID로 조회
      */
     public Customer getCustomerById(int custId) throws SQLException {
-        String sql = "SELECT custid, name, address, phone FROM Customer WHERE custid = ?";
+        String sql = "SELECT custid, name, address, phone, role FROM Customer WHERE custid = ?";
 
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -106,6 +226,7 @@ public class CustomerDAO {
                 customer.setName(rs.getString("name"));
                 customer.setAddress(rs.getString("address"));
                 customer.setPhone(rs.getString("phone"));
+                customer.setRole(rs.getString("role"));
                 return customer;
             }
         } finally {
@@ -113,6 +234,13 @@ public class CustomerDAO {
         }
 
         return null;
+    }
+
+    /**
+     * 로그인 처리 (custid로 고객 조회)
+     */
+    public Customer login(int custId) throws SQLException {
+        return getCustomerById(custId);
     }
 
     /**

@@ -1,6 +1,10 @@
 let ordersCache = [];
 let orderSort = { column: 'orderdate', direction: 'desc' };
 let loggedCustomerId = null;
+let orderCurrentPage = 1;
+let orderPageSize = 10;
+let orderTotalPages = 1;
+let orderTotalItems = 0;
 
 async function initOrderPage() {
   checkLoginStatus();
@@ -114,6 +118,7 @@ async function initMyOrdersPage() {
 
   loggedCustomerId = getCustomerId();
   setupOrderSortHeaders();
+  setupOrderPaginationEvents();
   updateOrderSortIndicators();
   await loadOrdersAndStats();
 }
@@ -131,10 +136,32 @@ function setupOrderSortHeaders() {
         orderSort.direction = 'asc';
       }
 
+      orderCurrentPage = 1;
       updateOrderSortIndicators();
       loadOrdersAndStats();
     });
   });
+}
+
+function setupOrderPaginationEvents() {
+  const btnFirst = document.getElementById('order-btn-first');
+  const btnPrev = document.getElementById('order-btn-prev');
+  const btnNext = document.getElementById('order-btn-next');
+  const btnLast = document.getElementById('order-btn-last');
+  const pageSizeSelect = document.getElementById('order-page-size');
+
+  if (btnFirst) btnFirst.addEventListener('click', () => goToOrderPage(1));
+  if (btnPrev) btnPrev.addEventListener('click', () => goToOrderPage(orderCurrentPage - 1));
+  if (btnNext) btnNext.addEventListener('click', () => goToOrderPage(orderCurrentPage + 1));
+  if (btnLast) btnLast.addEventListener('click', () => goToOrderPage(orderTotalPages));
+
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener('change', (e) => {
+      orderPageSize = parseInt(e.target.value);
+      orderCurrentPage = 1;
+      loadOrdersAndStats();
+    });
+  }
 }
 
 async function loadOrdersAndStats() {
@@ -143,13 +170,22 @@ async function loadOrdersAndStats() {
   try {
     toggleLoadingSpinner(true);
     const [ordersResponse, statsResponse] = await Promise.all([
-      fetchAPI(`/api/orders?action=list&custid=${loggedCustomerId}&sortBy=${orderSort.column}&direction=${orderSort.direction}`),
+      fetchAPI(`/api/orders?action=list&custid=${loggedCustomerId}&sortBy=${orderSort.column}&direction=${orderSort.direction}&page=${orderCurrentPage}&pageSize=${orderPageSize}`),
       fetchAPI(`/api/orders?action=stats&custid=${loggedCustomerId}`)
     ]);
 
-    ordersCache = ordersResponse.data || [];
+    if (ordersResponse.data && ordersResponse.data.items) {
+      ordersCache = ordersResponse.data.items || [];
+      orderTotalPages = ordersResponse.data.totalPages || 1;
+      orderTotalItems = ordersResponse.data.totalItems || 0;
+      orderCurrentPage = ordersResponse.data.page || 1;
+    } else {
+      ordersCache = ordersResponse.data || [];
+    }
+
     renderOrderStats(statsResponse.data || {});
     renderOrderTable();
+    updateOrderPaginationUI();
   } catch (error) {
     console.error('주문 정보를 불러오는 중 오류', error);
   } finally {
@@ -276,6 +312,56 @@ function updateOrderSortIndicators() {
       th.classList.add(orderSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
     }
   });
+}
+
+function goToOrderPage(page) {
+  if (page < 1 || page > orderTotalPages || page === orderCurrentPage) return;
+  orderCurrentPage = page;
+  loadOrdersAndStats();
+}
+
+function updateOrderPaginationUI() {
+  const pageInfo = document.getElementById('order-page-info');
+  const itemsInfo = document.getElementById('order-items-info');
+  const btnFirst = document.getElementById('order-btn-first');
+  const btnPrev = document.getElementById('order-btn-prev');
+  const btnNext = document.getElementById('order-btn-next');
+  const btnLast = document.getElementById('order-btn-last');
+
+  if (pageInfo) pageInfo.textContent = `페이지 ${orderCurrentPage} / ${orderTotalPages}`;
+  if (itemsInfo) itemsInfo.textContent = `전체 ${orderTotalItems}건`;
+
+  if (btnFirst) btnFirst.disabled = orderCurrentPage === 1;
+  if (btnPrev) btnPrev.disabled = orderCurrentPage === 1;
+  if (btnNext) btnNext.disabled = orderCurrentPage === orderTotalPages;
+  if (btnLast) btnLast.disabled = orderCurrentPage === orderTotalPages;
+
+  renderOrderPageNumbers();
+}
+
+function renderOrderPageNumbers() {
+  const container = document.getElementById('order-page-numbers');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  const maxButtons = 5;
+  let startPage = Math.max(1, orderCurrentPage - Math.floor(maxButtons / 2));
+  let endPage = Math.min(orderTotalPages, startPage + maxButtons - 1);
+
+  if (endPage - startPage < maxButtons - 1) {
+    startPage = Math.max(1, endPage - maxButtons + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    btn.className = i === orderCurrentPage
+      ? 'px-3 py-1.5 rounded-lg bg-primary-500 text-white font-medium text-sm'
+      : 'px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition text-sm font-medium';
+    btn.addEventListener('click', () => goToOrderPage(i));
+    container.appendChild(btn);
+  }
 }
 
 // Event listeners for order edit panel buttons

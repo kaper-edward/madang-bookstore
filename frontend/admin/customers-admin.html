@@ -28,8 +28,8 @@
         <p class="text-slate-300 mt-2">Customer 테이블 CRUD 작업 후 SQL 로그를 확인하세요.</p>
       </section>
 
-      <section class="grid lg:grid-cols-3 gap-6">
-        <div class="glass-panel p-6 space-y-4 lg:col-span-1">
+      <section class="space-y-6">
+        <div class="glass-panel p-6 space-y-4">
           <h2 class="text-xl font-semibold">고객 등록</h2>
           <form id="customer-create-form" class="form-grid space-y-4">
             <label class="form-label">이름
@@ -45,7 +45,7 @@
           </form>
         </div>
 
-        <div class="glass-panel p-6 lg:col-span-2 space-y-6">
+        <div class="glass-panel p-6 space-y-6">
           <form id="customer-filter-form" class="grid md:grid-cols-3 gap-4">
             <label class="form-label">이름
               <input type="text" id="filter-name" class="input" placeholder="이름 검색" autocomplete="off">
@@ -79,6 +79,27 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- 페이지네이션 -->
+          <div id="customer-pagination" class="flex items-center justify-between gap-4 pt-4 border-t border-white/10 text-sm">
+            <div class="text-slate-300">
+              <span id="customer-page-info">페이지 1 / 1</span>
+              <span class="mx-2">·</span>
+              <span id="customer-items-info">전체 0건</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="customer-btn-first" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>⏮️</button>
+              <button id="customer-btn-prev" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>◀</button>
+              <div id="customer-page-numbers" class="flex items-center gap-1"></div>
+              <button id="customer-btn-next" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>▶</button>
+              <button id="customer-btn-last" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>⏭️</button>
+            </div>
+            <select id="customer-page-size" class="input py-1.5 px-2 w-20 text-sm">
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
           </div>
         </div>
       </section>

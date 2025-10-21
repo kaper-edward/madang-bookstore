@@ -1,10 +1,15 @@
 package com.madang.server;
 
-import com.sun.net.httpserver.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.nio.file.*;
 import java.util.concurrent.Executors;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 
 /**
  * 마당 서점 간단한 HTTP 서버
@@ -12,7 +17,7 @@ import java.util.concurrent.Executors;
  */
 public class MadangServer {
 
-    private static final int PORT = 8080;
+    private static final int PORT = 8888;
     private static final String FRONTEND_DIR = "frontend";
 
     public static void main(String[] args) throws IOException {
