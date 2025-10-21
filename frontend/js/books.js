@@ -71,6 +71,31 @@ function setupBooksEventListeners() {
     });
   }
 
+  // 모달 이벤트
+  const openBookCreateModal = document.getElementById('open-book-create-modal');
+  const closeBookCreateModal = document.getElementById('close-book-create-modal');
+  const bookCreateModal = document.getElementById('book-create-modal');
+
+  if (openBookCreateModal && bookCreateModal) {
+    openBookCreateModal.addEventListener('click', () => {
+      bookCreateModal.classList.add('active');
+    });
+  }
+
+  if (closeBookCreateModal && bookCreateModal) {
+    closeBookCreateModal.addEventListener('click', () => {
+      bookCreateModal.classList.remove('active');
+    });
+  }
+
+  if (bookCreateModal) {
+    bookCreateModal.addEventListener('click', (e) => {
+      if (e.target === bookCreateModal) {
+        bookCreateModal.classList.remove('active');
+      }
+    });
+  }
+
   const createForm = document.getElementById('book-create-form');
   if (createForm) {
     createForm.addEventListener('submit', async (event) => {
@@ -87,6 +112,9 @@ function setupBooksEventListeners() {
         });
         showToast('도서가 등록되었습니다.', 'success');
         createForm.reset();
+        // 모달 닫기
+        const bookCreateModal = document.getElementById('book-create-modal');
+        if (bookCreateModal) bookCreateModal.classList.remove('active');
         await Promise.all([loadPublishers(), loadBooks()]);
       } catch (error) {
         alert(`도서 등록 중 오류가 발생했습니다: ${error.message}`);

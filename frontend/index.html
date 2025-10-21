@@ -18,8 +18,7 @@
           <a href="books.html" class="nav-link">도서</a>
           <a href="customer-login.html" class="nav-link">고객</a>
           <a href="my-orders.html" class="nav-link">내 주문</a>
-          <a href="dashboard.html" class="nav-link">대시보드</a>
-                  <a href="admin/index.html" class="btn-outline">관리자</a>
+          <a href="admin/index.html" class="btn-outline">관리자</a>
         </nav>
         <div id="user-info" class="user-pill"></div>
       </div>
@@ -40,7 +39,7 @@
           <div class="flex flex-wrap gap-3">
             <a href="customer-login.html" class="btn-primary">고객 선택하기</a>
             <a href="books.html" class="btn-outline">도서 둘러보기</a>
-            <a href="dashboard.html" class="btn-ghost">대시보드 보기</a>
+            <a href="my-orders.html" class="btn-outline">내 주문 관리</a>
           </div>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-300">
@@ -48,33 +47,6 @@
           <div class="info-chip">MySQL + JDBC</div>
           <div class="info-chip">Vanilla JS + Tailwind</div>
           <div class="info-chip">SQL 로그 시각화</div>
-        </div>
-      </section>
-
-      <section>
-        <h2 class="section-title">빠른 이동</h2>
-        <div class="grid md:grid-cols-3 gap-6">
-          <a href="books.html" class="quick-card">
-            <span class="icon">📚</span>
-            <div>
-              <h3>도서 CRUD</h3>
-              <p>정렬/검색/추가/수정/삭제를 연습하고 SQL 로그를 확인하세요.</p>
-            </div>
-          </a>
-          <a href="my-orders.html" class="quick-card">
-            <span class="icon">🧾</span>
-            <div>
-              <h3>내 주문 관리</h3>
-              <p>주문을 생성하고 금액을 수정하거나 취소해 보세요.</p>
-            </div>
-          </a>
-          <a href="dashboard.html" class="quick-card">
-            <span class="icon">📈</span>
-            <div>
-              <h3>대시보드</h3>
-              <p>ORDER BY 정렬이 적용된 통계를 확인하고 SQL을 추적하세요.</p>
-            </div>
-          </a>
         </div>
       </section>
 
@@ -101,13 +73,66 @@
         </div>
         <div class="flex gap-3">
           <button id="test-server" class="btn-primary">서버 테스트</button>
-          <a href="QUICKSTART.md" class="btn-outline" target="_blank">실행 가이드 보기</a>
+          <a href="../README.md" class="btn-outline" target="_blank">실행 가이드 보기</a>
         </div>
       </section>
     </main>
 
-    <footer class="footer">
-      <p>© 2025 Madang Bookstore · CRUD SQL Training Project</p>
+    <footer class="border-t border-white/10 bg-slate-950/80 backdrop-blur-md mt-20">
+      <div class="max-w-6xl mx-auto px-6 py-12">
+        <div class="grid md:grid-cols-4 gap-8 mb-8">
+          <div>
+            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+              <span class="text-primary-300">📚</span> 마당 서점
+            </h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              교육용 온라인 서점 시스템<br>
+              SQL과 웹 개발을 학습하기 위한<br>
+              실습 프로젝트입니다.
+            </p>
+          </div>
+          <div>
+            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">서비스</h4>
+            <ul class="space-y-2 text-sm">
+              <li><a href="books.html" class="text-slate-400 hover:text-primary-300 transition">도서 목록</a></li>
+              <li><a href="my-orders.html" class="text-slate-400 hover:text-primary-300 transition">주문 내역</a></li>
+              <li><a href="admin/index.html" class="text-slate-400 hover:text-primary-300 transition">관리자</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">고객 지원</h4>
+            <ul class="space-y-2 text-sm">
+              <li><a href="customer-login.html" class="text-slate-400 hover:text-primary-300 transition">로그인</a></li>
+              <li><a href="#" class="text-slate-400 hover:text-primary-300 transition">FAQ</a></li>
+              <li><a href="#" class="text-slate-400 hover:text-primary-300 transition">고객센터</a></li>
+              <li><a href="#" class="text-slate-400 hover:text-primary-300 transition">문의하기</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">회사 정보</h4>
+            <ul class="space-y-2 text-sm text-slate-400">
+              <li>서울시 성북구 안암로 145</li>
+              <li>고려대학교 정보대학</li>
+              <li>이메일: madang@example.com</li>
+              <li>전화: 02-3290-0000</li>
+            </ul>
+          </div>
+        </div>
+        <div class="pt-8 border-t border-white/5">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-sm text-slate-500">
+              © 2025 Madang Bookstore. All rights reserved. · CRUD SQL Training Project
+            </p>
+            <div class="flex gap-4 text-sm">
+              <a href="#" class="text-slate-500 hover:text-primary-300 transition">이용약관</a>
+              <span class="text-slate-700">|</span>
+              <a href="#" class="text-slate-500 hover:text-primary-300 transition">개인정보처리방침</a>
+              <span class="text-slate-700">|</span>
+              <a href="#" class="text-slate-500 hover:text-primary-300 transition">고객센터</a>
+            </div>
+          </div>
+        </div>
+      </div>
     </footer>
   </div>
 

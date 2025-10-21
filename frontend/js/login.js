@@ -1,6 +1,7 @@
 let loginCustomers = [];
 let loginSort = { column: 'name', direction: 'asc' };
 let loginFilter = '';
+let loginRoleFilter = '';
 let loginCurrentPage = 1;
 let loginPageSize = 10;
 let loginTotalPages = 1;
@@ -18,7 +19,9 @@ function setupLoginEvents() {
     filterForm.addEventListener('submit', (event) => {
       event.preventDefault();
       const input = document.getElementById('login-filter');
+      const roleSelect = document.getElementById('login-role-filter');
       loginFilter = input ? input.value.trim() : '';
+      loginRoleFilter = roleSelect ? roleSelect.value : '';
       loginCurrentPage = 1;
       loadLoginCustomers();
     });
@@ -62,6 +65,31 @@ function setupLoginEvents() {
     });
   }
 
+  // 모달 이벤트
+  const openSignupModal = document.getElementById('open-signup-modal');
+  const closeSignupModal = document.getElementById('close-signup-modal');
+  const signupModal = document.getElementById('signup-modal');
+
+  if (openSignupModal && signupModal) {
+    openSignupModal.addEventListener('click', () => {
+      signupModal.classList.add('active');
+    });
+  }
+
+  if (closeSignupModal && signupModal) {
+    closeSignupModal.addEventListener('click', () => {
+      signupModal.classList.remove('active');
+    });
+  }
+
+  if (signupModal) {
+    signupModal.addEventListener('click', (e) => {
+      if (e.target === signupModal) {
+        signupModal.classList.remove('active');
+      }
+    });
+  }
+
   const signupForm = document.getElementById('signup-form');
   if (signupForm) {
     signupForm.addEventListener('submit', async (event) => {
@@ -82,6 +110,9 @@ function setupLoginEvents() {
           showToast(`${customer.name}님, 환영합니다!`, 'success');
           await loadLoginCustomers();
           signupForm.reset();
+          // 모달 닫기
+          const signupModal = document.getElementById('signup-modal');
+          if (signupModal) signupModal.classList.remove('active');
           if (!handlePostLoginRedirect()) {
             setTimeout(() => {
               window.location.href = 'index.html';
@@ -112,6 +143,10 @@ async function loadLoginCustomers() {
       params.set('name', loginFilter);
     }
 
+    if (loginRoleFilter) {
+      params.set('role', loginRoleFilter);
+    }
+
     const response = await fetchAPI(`/api/customers?${params.toString()}`);
 
     if (response.data && response.data.items) {
@@ -128,7 +163,7 @@ async function loadLoginCustomers() {
   } catch (error) {
     const tbody = document.getElementById('login-table-body');
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="4" class="py-10 text-center text-red-300">고객 목록을 불러오지 못했습니다.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-red-300">고객 목록을 불러오지 못했습니다.</td></tr>`;
     }
   } finally {
     toggleLoadingSpinner(false);
@@ -140,16 +175,27 @@ function renderLoginTable() {
   if (!tbody) return;
 
   if (loginCustomers.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" class="py-10 text-center text-slate-400">조건에 맞는 고객이 없습니다.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-slate-400">조건에 맞는 고객이 없습니다.</td></tr>`;
     return;
   }
+
+  const getRoleBadge = (role) => {
+    const badges = {
+      'admin': '<span class="px-2 py-1 rounded-full bg-red-500/20 text-red-300 text-xs font-medium">관리자</span>',
+      'manager': '<span class="px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-medium">매니저</span>',
+      'publisher': '<span class="px-2 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-medium">출판사</span>',
+      'customer': '<span class="px-2 py-1 rounded-full bg-gray-500/20 text-gray-300 text-xs font-medium">고객</span>'
+    };
+    return badges[role] || badges['customer'];
+  };
 
   tbody.innerHTML = loginCustomers.map((customer) => `
     <tr>
       <td>${escapeHtml(customer.name)}</td>
       <td>${escapeHtml(customer.address)}</td>
       <td>${escapeHtml(customer.phone)}</td>
-      <td><button class="btn-primary" data-login-id="${customer.custid}" data-name="${escapeHtml(customer.name)}">로그인</button></td>
+      <td>${getRoleBadge(customer.role)}</td>
+      <td><button class="btn-primary" data-login-id="${customer.custid}" data-name="${escapeHtml(customer.name)}" data-role="${customer.role}">로그인</button></td>
     </tr>
   `).join('');
 
@@ -157,7 +203,8 @@ function renderLoginTable() {
     button.addEventListener('click', () => {
       const custId = parseInt(button.dataset.loginId || '0', 10);
       const name = button.dataset.name || '';
-      setCustomerInfo(custId, name);
+      const role = button.dataset.role || 'customer';
+      setCustomerInfo(custId, name, role);
       showToast(`${name}님으로 로그인되었습니다.`, 'success');
       if (!handlePostLoginRedirect()) {
         setTimeout(() => {

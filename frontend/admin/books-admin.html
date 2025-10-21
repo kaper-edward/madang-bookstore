@@ -30,27 +30,14 @@
             <h1 class="text-3xl font-bold">도서 관리</h1>
             <p class="text-slate-300 mt-2">Book 테이블 CRUD 작업 후 콘솔 SQL을 확인하세요.</p>
           </div>
-          <button id="reset-filters" class="btn-ghost">필터 초기화</button>
+          <div class="flex items-center gap-3">
+            <button id="reset-filters" class="btn-ghost">필터 초기화</button>
+            <button id="open-book-create-modal" class="btn-primary">도서 등록</button>
+          </div>
         </div>
       </section>
 
       <section class="space-y-6">
-        <div class="glass-panel p-6 space-y-4">
-          <h2 class="text-xl font-semibold">도서 등록</h2>
-          <form id="book-create-form" class="form-grid space-y-4">
-            <label class="form-label">도서명
-              <input type="text" name="bookname" class="input" placeholder="예: 자바의 정석" required>
-            </label>
-            <label class="form-label">출판사
-              <input type="text" name="publisher" class="input" placeholder="예: 한빛미디어" required>
-            </label>
-            <label class="form-label">정가 (원)
-              <input type="number" name="price" class="input" min="0" step="100" value="15000" required>
-            </label>
-            <button type="submit" class="btn-primary w-full">도서 등록</button>
-          </form>
-        </div>
-
         <div class="glass-panel p-6 space-y-6">
           <form id="book-filter-form" class="grid md:grid-cols-4 gap-4">
             <label class="form-label">
@@ -167,8 +154,84 @@
       </section>
     </main>
 
-    <footer class="footer">
-      <p>© 2025 Madang Bookstore · Admin Books</p>
+    <!-- 도서 등록 모달 -->
+    <div id="book-create-modal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">도서 등록</h2>
+          <button class="modal-close" id="close-book-create-modal">&times;</button>
+        </div>
+        <form id="book-create-form" class="space-y-4">
+          <label class="form-label">도서명
+            <input type="text" name="bookname" class="input" placeholder="예: 자바의 정석" required>
+          </label>
+          <label class="form-label">출판사
+            <input type="text" name="publisher" class="input" placeholder="예: 한빛미디어" required>
+          </label>
+          <label class="form-label">정가 (원)
+            <input type="number" name="price" class="input" min="0" step="100" value="15000" required>
+          </label>
+          <button type="submit" class="btn-primary w-full">도서 등록</button>
+        </form>
+      </div>
+    </div>
+
+    <footer class="border-t border-white/10 bg-slate-950/80 backdrop-blur-md mt-20">
+      <div class="max-w-6xl mx-auto px-6 py-12">
+        <div class="grid md:grid-cols-4 gap-8 mb-8">
+          <div>
+            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+              <span class="text-primary-300">📚</span> 마당 서점
+            </h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              교육용 온라인 서점 시스템<br>
+              SQL과 웹 개발을 학습하기 위한<br>
+              실습 프로젝트입니다.
+            </p>
+          </div>
+          <div>
+            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">서비스</h4>
+            <ul class="space-y-2 text-sm">
+              <li><a href="../books.html" class="text-slate-400 hover:text-primary-300 transition">도서 목록</a></li>
+              <li><a href="../my-orders.html" class="text-slate-400 hover:text-primary-300 transition">주문 내역</a></li>
+              <li><a href="../dashboard.html" class="text-slate-400 hover:text-primary-300 transition">대시보드</a></li>
+              <li><a href="index.html" class="text-slate-400 hover:text-primary-300 transition">관리자</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">고객 지원</h4>
+            <ul class="space-y-2 text-sm">
+              <li><a href="../customer-login.html" class="text-slate-400 hover:text-primary-300 transition">로그인</a></li>
+              <li><a href="#" class="text-slate-400 hover:text-primary-300 transition">FAQ</a></li>
+              <li><a href="#" class="text-slate-400 hover:text-primary-300 transition">고객센터</a></li>
+              <li><a href="#" class="text-slate-400 hover:text-primary-300 transition">문의하기</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">회사 정보</h4>
+            <ul class="space-y-2 text-sm text-slate-400">
+              <li>서울시 성북구 안암로 145</li>
+              <li>고려대학교 정보대학</li>
+              <li>이메일: madang@example.com</li>
+              <li>전화: 02-3290-0000</li>
+            </ul>
+          </div>
+        </div>
+        <div class="pt-8 border-t border-white/5">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-sm text-slate-500">
+              © 2025 Madang Bookstore. All rights reserved.
+            </p>
+            <div class="flex gap-4 text-sm">
+              <a href="#" class="text-slate-500 hover:text-primary-300 transition">이용약관</a>
+              <span class="text-slate-700">|</span>
+              <a href="#" class="text-slate-500 hover:text-primary-300 transition">개인정보처리방침</a>
+              <span class="text-slate-700">|</span>
+              <a href="#" class="text-slate-500 hover:text-primary-300 transition">고객센터</a>
+            </div>
+          </div>
+        </div>
+      </div>
     </footer>
   </div>
 

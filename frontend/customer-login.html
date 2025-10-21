@@ -23,9 +23,14 @@
     </header>
 
     <main class="max-w-5xl mx-auto px-6 py-12 space-y-10">
-      <section class="glass-panel p-6 space-y-2">
-        <h1 class="text-3xl font-bold">마당 온라인 서점에 오신 것을 환영합니다.</h1>
-        <p class="text-slate-300">로그인하면 주문·CRUD 실습을 진행할 수 있습니다. 신규 고객은 회원가입(고객 등록)을 먼저 진행하세요.</p>
+      <section class="glass-panel p-6">
+        <div class="flex items-center justify-between gap-6">
+          <div class="space-y-2">
+            <h1 class="text-3xl font-bold">마당 온라인 서점에 오신 것을 환영합니다.</h1>
+            <p class="text-slate-300">로그인하면 주문·CRUD 실습을 진행할 수 있습니다. 신규 고객은 회원가입(고객 등록)을 먼저 진행하세요.</p>
+          </div>
+          <button id="open-signup-modal" class="btn-primary whitespace-nowrap">회원가입</button>
+        </div>
       </section>
 
       <section class="space-y-6">
@@ -34,8 +39,14 @@
             <h2 class="text-xl font-semibold">로그인</h2>
             <p class="text-sm text-slate-300">목록에서 자신의 이름을 선택하세요.</p>
           </div>
-          <form id="login-filter-form" class="flex gap-3">
+          <form id="login-filter-form" class="flex flex-col md:flex-row gap-3">
             <input type="text" id="login-filter" class="input flex-1" placeholder="이름 검색" autocomplete="off">
+            <select id="login-role-filter" class="input md:w-40">
+              <option value="">모든 역할</option>
+              <option value="customer">일반 고객</option>
+              <option value="manager">매니저</option>
+              <option value="admin">관리자</option>
+            </select>
             <button type="submit" class="btn-outline">검색</button>
           </form>
           <div class="table-wrapper">
@@ -45,11 +56,12 @@
                   <th data-column="name" class="sortable">이름</th>
                   <th data-column="address" class="sortable">주소</th>
                   <th data-column="phone" class="sortable">전화번호</th>
+                  <th data-column="role" class="sortable">역할</th>
                   <th>선택</th>
                 </tr>
               </thead>
               <tbody id="login-table-body">
-                <tr><td colspan="4" class="py-10 text-center text-slate-400">고객을 불러오는 중입니다...</td></tr>
+                <tr><td colspan="5" class="py-10 text-center text-slate-400">고객을 불러오는 중입니다...</td></tr>
               </tbody>
             </table>
           </div>
@@ -75,30 +87,86 @@
             </select>
           </div>
         </div>
-
-        <div class="glass-panel p-6 space-y-5">
-          <div>
-            <h2 class="text-xl font-semibold">회원가입</h2>
-            <p class="text-sm text-slate-300">새로운 고객을 등록하면 자동으로 로그인합니다.</p>
-          </div>
-          <form id="signup-form" class="space-y-4">
-            <label class="form-label">이름
-              <input type="text" name="name" class="input" placeholder="홍길동" required>
-            </label>
-            <label class="form-label">주소
-              <input type="text" name="address" class="input" placeholder="서울시 성북구" required>
-            </label>
-            <label class="form-label">전화번호
-              <input type="text" name="phone" class="input" placeholder="010-1234-5678" required>
-            </label>
-            <button type="submit" class="btn-primary w-full">회원가입</button>
-          </form>
-        </div>
       </section>
     </main>
 
-    <footer class="footer">
-      <p>© 2025 Madang Bookstore · Login</p>
+    <!-- 회원가입 모달 -->
+    <div id="signup-modal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">회원가입</h2>
+          <button class="modal-close" id="close-signup-modal">&times;</button>
+        </div>
+        <form id="signup-form" class="space-y-4">
+          <label class="form-label">이름
+            <input type="text" name="name" class="input" placeholder="홍길동" required>
+          </label>
+          <label class="form-label">주소
+            <input type="text" name="address" class="input" placeholder="서울시 성북구" required>
+          </label>
+          <label class="form-label">전화번호
+            <input type="text" name="phone" class="input" placeholder="010-1234-5678" required>
+          </label>
+          <button type="submit" class="btn-primary w-full">회원가입</button>
+        </form>
+      </div>
+    </div>
+
+    <footer class="border-t border-white/10 bg-slate-950/80 backdrop-blur-md mt-20">
+      <div class="max-w-6xl mx-auto px-6 py-12">
+        <div class="grid md:grid-cols-4 gap-8 mb-8">
+          <div>
+            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+              <span class="text-primary-300">📚</span> 마당 서점
+            </h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              교육용 온라인 서점 시스템<br>
+              SQL과 웹 개발을 학습하기 위한<br>
+              실습 프로젝트입니다.
+            </p>
+          </div>
+          <div>
+            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">서비스</h4>
+            <ul class="space-y-2 text-sm">
+              <li><a href="books.html" class="text-slate-400 hover:text-primary-300 transition">도서 목록</a></li>
+              <li><a href="my-orders.html" class="text-slate-400 hover:text-primary-300 transition">주문 내역</a></li>
+              <li><a href="admin/index.html" class="text-slate-400 hover:text-primary-300 transition">관리자</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">고객 지원</h4>
+            <ul class="space-y-2 text-sm">
+              <li><a href="customer-login.html" class="text-slate-400 hover:text-primary-300 transition">로그인</a></li>
+              <li><a href="#" class="text-slate-400 hover:text-primary-300 transition">FAQ</a></li>
+              <li><a href="#" class="text-slate-400 hover:text-primary-300 transition">고객센터</a></li>
+              <li><a href="#" class="text-slate-400 hover:text-primary-300 transition">문의하기</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">회사 정보</h4>
+            <ul class="space-y-2 text-sm text-slate-400">
+              <li>서울시 성북구 안암로 145</li>
+              <li>고려대학교 정보대학</li>
+              <li>이메일: madang@example.com</li>
+              <li>전화: 02-3290-0000</li>
+            </ul>
+          </div>
+        </div>
+        <div class="pt-8 border-t border-white/5">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-sm text-slate-500">
+              © 2025 Madang Bookstore. All rights reserved.
+            </p>
+            <div class="flex gap-4 text-sm">
+              <a href="#" class="text-slate-500 hover:text-primary-300 transition">이용약관</a>
+              <span class="text-slate-700">|</span>
+              <a href="#" class="text-slate-500 hover:text-primary-300 transition">개인정보처리방침</a>
+              <span class="text-slate-700">|</span>
+              <a href="#" class="text-slate-500 hover:text-primary-300 transition">고객센터</a>
+            </div>
+          </div>
+        </div>
+      </div>
     </footer>
   </div>
 

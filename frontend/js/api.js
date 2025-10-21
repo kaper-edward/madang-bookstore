@@ -133,11 +133,13 @@ function getCustomerId() {
 function getCustomerInfo() {
   const custid = localStorage.getItem('custid');
   const custname = localStorage.getItem('custname');
+  const role = localStorage.getItem('role');
 
   if (custid && custname) {
     return {
       custid: parseInt(custid),
-      name: custname
+      name: custname,
+      role: role || 'customer'
     };
   }
 
@@ -148,10 +150,12 @@ function getCustomerInfo() {
  * 고객 정보 저장
  * @param {number} custid - 고객 ID
  * @param {string} name - 고객명
+ * @param {string} role - 역할 (customer, manager, admin, publisher)
  */
-function setCustomerInfo(custid, name) {
+function setCustomerInfo(custid, name, role = 'customer') {
   localStorage.setItem('custid', custid.toString());
   localStorage.setItem('custname', name);
+  localStorage.setItem('role', role);
 }
 
 /**
@@ -160,6 +164,7 @@ function setCustomerInfo(custid, name) {
 function logout() {
   localStorage.removeItem('custid');
   localStorage.removeItem('custname');
+  localStorage.removeItem('role');
   window.location.href = 'index.html';
 }
 
@@ -172,10 +177,9 @@ function checkLoginStatus() {
 
   if (customer && userInfoElement) {
     userInfoElement.innerHTML = `
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
         <span class="text-secondary">로그인: <strong>${customer.name}</strong>님 👤</span>
         <button onclick="logout()" class="btn-secondary">로그아웃</button>
-        <a href="index.html" class="btn-outline">홈</a>
       </div>
     `;
   }

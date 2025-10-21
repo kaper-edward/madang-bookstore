@@ -138,22 +138,32 @@ Database (MySQL madangdb)
 
 ```
 frontend/
-├── index.html           # Main landing page
-├── customer-login.html  # Customer selection (simple auth)
+├── index.html           # Main landing page (hero section with quick actions)
+├── customer-login.html  # Customer selection with role filter & badges
 ├── books.html          # Book listing with search/filter
 ├── book-detail.html    # Book details + purchase
 ├── order.html          # Order confirmation
 ├── my-orders.html      # Order history
-├── dashboard.html      # Admin statistics dashboard
+├── dashboard.html      # Admin statistics dashboard (admin menu only)
+├── admin/
+│   ├── index.html      # Admin portal with dashboard, books-admin, customers-admin
+│   ├── books-admin.html    # Book CRUD management
+│   └── customers-admin.html # Customer CRUD management
 ├── css/styles.css      # Utility-first CSS
 └── js/
-    ├── api.js          # Shared API utilities (fetchAPI, CORS)
+    ├── api.js          # Shared API utilities (fetchAPI, role management)
     ├── books.js
     ├── orders.js
     ├── customers.js
-    ├── login.js
+    ├── login.js        # Role filtering, badge rendering
     └── dashboard.js
 ```
+
+**UI/UX Notes**:
+- **Dashboard**: Moved to admin section (accessible from admin portal only)
+- **Navigation**: Logo always links to index.html; no separate "홈" buttons in user info
+- **Footer**: Professional 4-column layout (회사 정보, 서비스, 고객 지원, 회사 정보) on all pages
+- **Role System**: Visual role badges in login table with color coding
 
 ## Important Design Patterns
 
@@ -259,7 +269,8 @@ See `sql/queries.sql` for comprehensive SQL examples.
 
 - API base URL configured in `frontend/js/api.js`
 - All API calls use `fetchAPI(endpoint, options)` helper
-- Session management via `localStorage` (custid)
+- Session management via `localStorage` (custid, custname, role)
+- User info display: `checkLoginStatus()` shows logged-in user with logout button (no separate "홈" button - logo handles navigation)
 - CORS headers automatically added by `ApiHandler`
 
 ## Database Schema Constraints
@@ -333,7 +344,16 @@ Test accounts for development:
 
 ### Role Implementation
 
-**Frontend**: Role-based UI rendering using `localStorage.getItem('role')`
+**Frontend Login & Filtering**: `customer-login.html` includes role-based filtering and visual role badges
+- Role filter dropdown: Filter users by role (모든 역할, 일반 고객, 매니저, 관리자)
+- Color-coded role badges in login table:
+  - **Admin**: Red badge (`bg-red-500/20 text-red-300`)
+  - **Manager**: Blue badge (`bg-blue-500/20 text-blue-300`)
+  - **Publisher**: Purple badge (`bg-purple-500/20 text-purple-300`)
+  - **Customer**: Gray badge (`bg-gray-500/20 text-gray-300`)
+- Role is stored in localStorage and passed to `setCustomerInfo(custid, name, role)`
+
+**Frontend Role-Based UI**: Role-based UI rendering using `localStorage.getItem('role')`
 ```javascript
 const userRole = localStorage.getItem('role');
 if (userRole === 'admin' || userRole === 'manager') {

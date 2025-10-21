@@ -384,6 +384,44 @@ public class OrderDAO {
     }
 
     /**
+     * 주간 베스트셀러 (지난 7일)
+     */
+    public List<Map<String, Object>> getWeeklyBestsellers(int limit) throws SQLException {
+        List<Map<String, Object>> bestsellers = new ArrayList<>();
+        String sql = "SELECT b.bookname, b.publisher, COUNT(*) as salesCount " +
+                     "FROM Orders o " +
+                     "JOIN Book b ON o.bookid = b.bookid " +
+                     "WHERE o.orderdate >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) " +
+                     "GROUP BY b.bookid, b.bookname, b.publisher " +
+                     "ORDER BY salesCount DESC " +
+                     "LIMIT ?";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, limit);
+            SqlLogger.logQuery(sql, limit);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, Object> book = new HashMap<>();
+                book.put("bookname", rs.getString("bookname"));
+                book.put("publisher", rs.getString("publisher"));
+                book.put("salesCount", rs.getInt("salesCount"));
+                bestsellers.add(book);
+            }
+        } finally {
+            DBConnection.close(conn, pstmt, rs);
+        }
+
+        return bestsellers;
+    }
+
+    /**
      * 최근 주문 조회
      */
     public List<Map<String, Object>> getRecentOrders(int limit, String sortBy, String direction) throws SQLException {
@@ -598,5 +636,286 @@ public class OrderDAO {
     private String resolveDirection(String direction) {
         if (direction == null) return "DESC";
         return "asc".equalsIgnoreCase(direction) ? "ASC" : "DESC";
+    }
+
+    /**
+     * 월별 판매 통계 조회 (최근 N개월)
+     * 대시보드 차트용
+     */
+    public List<Map<String, Object>> getMonthlySales(int months) throws SQLException {
+        List<Map<String, Object>> stats = new ArrayList<>();
+
+        String sql = "SELECT " +
+                     "DATE_FORMAT(orderdate, '%Y-%m') AS month, " +
+                     "COUNT(*) AS orderCount, " +
+                     "SUM(saleprice) AS totalRevenue, " +
+                     "AVG(saleprice) AS avgPrice " +
+                     "FROM Orders " +
+                     "WHERE orderdate >= DATE_SUB(CURDATE(), INTERVAL ? MONTH) " +
+                     "GROUP BY DATE_FORMAT(orderdate, '%Y-%m') " +
+                     "ORDER BY month ASC";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, months);
+
+            SqlLogger.logQuery(sql, months);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("month", rs.getString("month"));
+                row.put("orderCount", rs.getInt("orderCount"));
+                row.put("totalRevenue", rs.getInt("totalRevenue"));
+                row.put("avgPrice", rs.getDouble("avgPrice"));
+                stats.add(row);
+            }
+        } finally {
+            DBConnection.close(conn, pstmt, rs);
+        }
+
+        return stats;
+    }
+
+    /**
+     * 고객 세그먼트 분석 (구매 금액별)
+     * 대시보드 차트용
+     */
+    public List<Map<String, Object>> getCustomerSegments() throws SQLException {
+        List<Map<String, Object>> segments = new ArrayList<>();
+
+        String sql = "SELECT " +
+                     "CASE " +
+                     "    WHEN totalAmount >= 100000 THEN 'VIP' " +
+                     "    WHEN totalAmount >= 50000 THEN '우수' " +
+                     "    WHEN totalAmount >= 10000 THEN '일반' " +
+                     "    ELSE '신규' " +
+                     "END AS segment, " +
+                     "COUNT(*) AS customerCount, " +
+                     "SUM(totalAmount) AS totalRevenue " +
+                     "FROM ( " +
+                     "    SELECT c.custid, c.name, SUM(o.saleprice) AS totalAmount " +
+                     "    FROM Customer c " +
+                     "    LEFT JOIN Orders o ON c.custid = o.custid " +
+                     "    GROUP BY c.custid, c.name " +
+                     ") AS customer_totals " +
+                     "GROUP BY segment " +
+                     "ORDER BY FIELD(segment, 'VIP', '우수', '일반', '신규')";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+
+            SqlLogger.logQuery(sql);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("segment", rs.getString("segment"));
+                row.put("customerCount", rs.getInt("customerCount"));
+                row.put("totalRevenue", rs.getInt("totalRevenue"));
+                segments.add(row);
+            }
+        } finally {
+            DBConnection.close(conn, pstmt, rs);
+        }
+
+        return segments;
+    }
+
+    /**
+     * 특정 월의 고객 세그먼트 분석 (해당 월까지 누적 구매 금액 기준)
+     * 대시보드 차트용
+     */
+    public List<Map<String, Object>> getCustomerSegmentsByMonth(String month) throws SQLException {
+        List<Map<String, Object>> segments = new ArrayList<>();
+
+        // month 형식: YYYY-MM
+        String sql = "SELECT " +
+                     "CASE " +
+                     "    WHEN totalAmount >= 100000 THEN 'VIP' " +
+                     "    WHEN totalAmount >= 50000 THEN '우수' " +
+                     "    WHEN totalAmount >= 10000 THEN '일반' " +
+                     "    ELSE '신규' " +
+                     "END AS segment, " +
+                     "COUNT(*) AS customerCount, " +
+                     "SUM(totalAmount) AS totalRevenue " +
+                     "FROM ( " +
+                     "    SELECT c.custid, c.name, IFNULL(SUM(o.saleprice), 0) AS totalAmount " +
+                     "    FROM Customer c " +
+                     "    LEFT JOIN Orders o ON c.custid = o.custid " +
+                     "        AND DATE_FORMAT(o.orderdate, '%Y-%m') <= ? " +
+                     "    GROUP BY c.custid, c.name " +
+                     ") AS customer_totals " +
+                     "GROUP BY segment " +
+                     "ORDER BY FIELD(segment, 'VIP', '우수', '일반', '신규')";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, month);
+
+            SqlLogger.logQuery(sql, month);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("segment", rs.getString("segment"));
+                row.put("customerCount", rs.getInt("customerCount"));
+                row.put("totalRevenue", rs.getInt("totalRevenue"));
+                segments.add(row);
+            }
+        } finally {
+            DBConnection.close(conn, pstmt, rs);
+        }
+
+        return segments;
+    }
+
+    /**
+     * 특정 월의 매출 TOP 고객 조회
+     * 대시보드 차트/테이블용
+     */
+    public List<Map<String, Object>> getTopCustomersByMonth(String month, int limit) throws SQLException {
+        List<Map<String, Object>> customers = new ArrayList<>();
+
+        // month 형식: YYYY-MM
+        String sql = "SELECT c.name, COUNT(o.orderid) AS orderCount, " +
+                     "IFNULL(SUM(o.saleprice), 0) AS totalAmount, " +
+                     "IFNULL(AVG(o.saleprice), 0) AS avgAmount " +
+                     "FROM Customer c " +
+                     "INNER JOIN Orders o ON c.custid = o.custid " +
+                     "WHERE DATE_FORMAT(o.orderdate, '%Y-%m') = ? " +
+                     "GROUP BY c.custid, c.name " +
+                     "ORDER BY totalAmount DESC " +
+                     "LIMIT ?";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, month);
+            pstmt.setInt(2, limit);
+
+            SqlLogger.logQuery(sql, month, limit);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("name", rs.getString("name"));
+                row.put("orderCount", rs.getInt("orderCount"));
+                row.put("totalAmount", rs.getInt("totalAmount"));
+                row.put("avgAmount", rs.getDouble("avgAmount"));
+                customers.add(row);
+            }
+        } finally {
+            DBConnection.close(conn, pstmt, rs);
+        }
+
+        return customers;
+    }
+
+    /**
+     * 특정 월의 출판사별 판매 현황 조회
+     * 대시보드 차트용
+     */
+    public List<Map<String, Object>> getPublisherStatsByMonth(String month) throws SQLException {
+        List<Map<String, Object>> stats = new ArrayList<>();
+
+        // month 형식: YYYY-MM
+        String sql = "SELECT b.publisher, " +
+                     "COUNT(DISTINCT b.bookid) AS bookCount, " +
+                     "COUNT(o.orderid) AS salesCount, " +
+                     "IFNULL(SUM(o.saleprice), 0) AS totalRevenue " +
+                     "FROM Book b " +
+                     "LEFT JOIN Orders o ON b.bookid = o.bookid " +
+                     "    AND DATE_FORMAT(o.orderdate, '%Y-%m') = ? " +
+                     "GROUP BY b.publisher " +
+                     "ORDER BY totalRevenue DESC";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, month);
+
+            SqlLogger.logQuery(sql, month);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("publisher", rs.getString("publisher"));
+                row.put("bookCount", rs.getInt("bookCount"));
+                row.put("salesCount", rs.getInt("salesCount"));
+                row.put("totalRevenue", rs.getInt("totalRevenue"));
+                stats.add(row);
+            }
+        } finally {
+            DBConnection.close(conn, pstmt, rs);
+        }
+
+        return stats;
+    }
+
+    /**
+     * 특정 월의 도서별 판매 통계
+     */
+    public List<Map<String, Object>> getBookStatsByMonth(String month) throws SQLException {
+        List<Map<String, Object>> stats = new ArrayList<>();
+
+        String sql = "SELECT b.bookname, b.publisher, b.price, " +
+                     "COUNT(o.orderid) as salesCount, " +
+                     "IFNULL(AVG(o.saleprice), 0) as avgSalePrice " +
+                     "FROM Book b " +
+                     "LEFT JOIN Orders o ON b.bookid = o.bookid " +
+                     "    AND DATE_FORMAT(o.orderdate, '%Y-%m') = ? " +
+                     "GROUP BY b.bookid, b.bookname, b.publisher, b.price " +
+                     "ORDER BY salesCount DESC";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, month);
+
+            SqlLogger.logQuery(sql, month);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, Object> stat = new HashMap<>();
+                stat.put("bookname", rs.getString("bookname"));
+                stat.put("publisher", rs.getString("publisher"));
+                stat.put("price", rs.getInt("price"));
+                stat.put("salesCount", rs.getInt("salesCount"));
+                stat.put("avgSalePrice", rs.getDouble("avgSalePrice"));
+                stats.add(stat);
+            }
+        } finally {
+            DBConnection.close(conn, pstmt, rs);
+        }
+
+        return stats;
     }
 }

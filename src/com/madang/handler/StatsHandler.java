@@ -28,6 +28,12 @@ public class StatsHandler extends ApiHandler {
             return successResponse(listMapToJsonArray(bestsellers));
         }
 
+        if ("weekly-bestsellers".equals(action)) {
+            int limit = Integer.parseInt(params.getOrDefault("limit", "5"));
+            List<Map<String, Object>> bestsellers = orderDAO.getWeeklyBestsellers(limit);
+            return successResponse(listMapToJsonArray(bestsellers));
+        }
+
         if ("recent".equals(action)) {
             int limit = Integer.parseInt(params.getOrDefault("limit", "5"));
             String sortBy = params.get("sortBy");
@@ -54,6 +60,59 @@ public class StatsHandler extends ApiHandler {
             String sortBy = params.get("sortBy");
             String direction = params.get("direction");
             List<Map<String, Object>> stats = orderDAO.getStatsByBook(sortBy, direction);
+            return successResponse(listMapToJsonArray(stats));
+        }
+
+        if ("monthly".equals(action)) {
+            int months = Integer.parseInt(params.getOrDefault("months", "12"));
+            List<Map<String, Object>> stats = orderDAO.getMonthlySales(months);
+            return successResponse(listMapToJsonArray(stats));
+        }
+
+        if ("customer-segments".equals(action)) {
+            String month = params.get("month");
+            List<Map<String, Object>> segments;
+
+            if (month != null && !month.isEmpty()) {
+                segments = orderDAO.getCustomerSegmentsByMonth(month);
+            } else {
+                segments = orderDAO.getCustomerSegments();
+            }
+
+            return successResponse(listMapToJsonArray(segments));
+        }
+
+        if ("top-customers".equals(action)) {
+            String month = params.get("month");
+            int limit = Integer.parseInt(params.getOrDefault("limit", "10"));
+
+            if (month == null || month.isEmpty()) {
+                return errorResponse("month 파라미터가 필요합니다");
+            }
+
+            List<Map<String, Object>> customers = orderDAO.getTopCustomersByMonth(month, limit);
+            return successResponse(listMapToJsonArray(customers));
+        }
+
+        if ("publishers-by-month".equals(action)) {
+            String month = params.get("month");
+
+            if (month == null || month.isEmpty()) {
+                return errorResponse("month 파라미터가 필요합니다");
+            }
+
+            List<Map<String, Object>> stats = orderDAO.getPublisherStatsByMonth(month);
+            return successResponse(listMapToJsonArray(stats));
+        }
+
+        if ("books-by-month".equals(action)) {
+            String month = params.get("month");
+
+            if (month == null || month.isEmpty()) {
+                return errorResponse("month 파라미터가 필요합니다");
+            }
+
+            List<Map<String, Object>> stats = orderDAO.getBookStatsByMonth(month);
             return successResponse(listMapToJsonArray(stats));
         }
 

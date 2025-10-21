@@ -59,6 +59,31 @@ function setupCustomerAdminEvents() {
     });
   }
 
+  // 모달 이벤트
+  const openCustomerCreateModal = document.getElementById('open-customer-create-modal');
+  const closeCustomerCreateModal = document.getElementById('close-customer-create-modal');
+  const customerCreateModal = document.getElementById('customer-create-modal');
+
+  if (openCustomerCreateModal && customerCreateModal) {
+    openCustomerCreateModal.addEventListener('click', () => {
+      customerCreateModal.classList.add('active');
+    });
+  }
+
+  if (closeCustomerCreateModal && customerCreateModal) {
+    closeCustomerCreateModal.addEventListener('click', () => {
+      customerCreateModal.classList.remove('active');
+    });
+  }
+
+  if (customerCreateModal) {
+    customerCreateModal.addEventListener('click', (e) => {
+      if (e.target === customerCreateModal) {
+        customerCreateModal.classList.remove('active');
+      }
+    });
+  }
+
   const createForm = document.getElementById('customer-create-form');
   if (createForm) {
     createForm.addEventListener('submit', async (event) => {
@@ -74,6 +99,9 @@ function setupCustomerAdminEvents() {
         });
         showToast('고객이 등록되었습니다.', 'success');
         createForm.reset();
+        // 모달 닫기
+        const customerCreateModal = document.getElementById('customer-create-modal');
+        if (customerCreateModal) customerCreateModal.classList.remove('active');
         await loadCustomers();
       } catch (error) {
         alert(`고객 등록 중 오류가 발생했습니다: ${error.message}`);
