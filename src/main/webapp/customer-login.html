@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 · 마당 온라인 서점</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-slate-950">
+  <div class="min-h-screen bg-gradient-to-tr from-slate-900 via-slate-950 to-slate-900 text-slate-100">
+    <header class="glass-panel border-b border-white/10">
+      <!-- 헤더는 JavaScript로 동적 렌더링됩니다 -->
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-12 space-y-10">
+      <section class="glass-panel p-6">
+        <div class="flex items-center justify-between gap-6">
+          <div class="space-y-2">
+            <h1 class="text-3xl font-bold">마당 온라인 서점에 오신 것을 환영합니다.</h1>
+            <p class="text-slate-300">로그인하면 주문·CRUD 실습을 진행할 수 있습니다. 신규 고객은 회원가입(고객 등록)을 먼저 진행하세요.</p>
+          </div>
+          <button id="open-signup-modal" class="btn-primary whitespace-nowrap">회원가입</button>
+        </div>
+      </section>
+
+      <section class="space-y-6">
+        <div class="glass-panel p-6 space-y-5">
+          <div>
+            <h2 class="text-xl font-semibold">로그인</h2>
+            <p class="text-sm text-slate-300">목록에서 자신의 이름을 선택하세요.</p>
+          </div>
+          <form id="login-filter-form" class="flex flex-col md:flex-row gap-3">
+            <input type="text" id="login-filter" class="input flex-1" placeholder="이름 검색" autocomplete="off">
+            <select id="login-role-filter" class="input md:w-40">
+              <option value="">모든 역할</option>
+              <option value="customer">일반 고객</option>
+              <option value="manager">매니저</option>
+              <option value="admin">관리자</option>
+            </select>
+            <button type="submit" class="btn-outline">검색</button>
+          </form>
+          <div class="table-wrapper">
+            <table class="data-table" id="login-table">
+              <thead>
+                <tr>
+                  <th data-column="name" class="sortable">이름</th>
+                  <th data-column="address" class="sortable">주소</th>
+                  <th data-column="phone" class="sortable">전화번호</th>
+                  <th data-column="role" class="sortable">역할</th>
+                  <th>선택</th>
+                </tr>
+              </thead>
+              <tbody id="login-table-body">
+                <tr><td colspan="5" class="py-10 text-center text-slate-400">고객을 불러오는 중입니다...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 페이지네이션 -->
+          <div id="login-pagination" class="flex items-center justify-between gap-4 pt-4 border-t border-white/10 text-sm">
+            <div class="text-slate-300">
+              <span id="login-page-info">페이지 1 / 1</span>
+              <span class="mx-2">·</span>
+              <span id="login-items-info">전체 0건</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="login-btn-first" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>⏮️</button>
+              <button id="login-btn-prev" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>◀</button>
+              <div id="login-page-numbers" class="flex items-center gap-1"></div>
+              <button id="login-btn-next" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>▶</button>
+              <button id="login-btn-last" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-medium" disabled>⏭️</button>
+            </div>
+            <select id="login-page-size" class="input py-1.5 px-2 w-20 text-sm">
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 회원가입 모달 -->
+    <div id="signup-modal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">회원가입</h2>
+          <button class="modal-close" id="close-signup-modal">&times;</button>
+        </div>
+        <form id="signup-form" class="space-y-4">
+          <label class="form-label">이름
+            <input type="text" name="name" class="input" placeholder="홍길동" required>
+          </label>
+          <label class="form-label">주소
+            <input type="text" name="address" class="input" placeholder="서울시 성북구" required>
+          </label>
+          <label class="form-label">전화번호
+            <input type="text" name="phone" class="input" placeholder="010-1234-5678" required>
+          </label>
+          <button type="submit" class="btn-primary w-full">회원가입</button>
+        </form>
+      </div>
+    </div>
+
+    <footer class="border-t border-white/10 bg-slate-950/80 backdrop-blur-md mt-20">
+      <!-- 푸터는 JavaScript로 동적 렌더링됩니다 -->
+    </footer>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

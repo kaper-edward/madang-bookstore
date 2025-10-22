@@ -267,11 +267,17 @@ See `sql/queries.sql` for comprehensive SQL examples.
 
 ### Frontend-Backend Integration
 
-- API base URL configured in `frontend/js/api.js`
+- **API base URL configured in `src/main/webapp/js/api.js`**
+  - **CRITICAL**: Must match Tomcat context path (WAR file name)
+  - For `madang.war`: `const API_BASE_URL = '/madang';`
+  - For `ROOT.war`: `const API_BASE_URL = '';`
+  - **Common mistake**: Empty string causes 404 errors when deployed to Tomcat
+  - **Symptom**: Browser shows "도서 데이터를 불러오지 못했습니다"
+  - **Debug**: Check browser DevTools Network tab for 404 on `/api/*` instead of `/madang/api/*`
 - All API calls use `fetchAPI(endpoint, options)` helper
 - Session management via `localStorage` (custid, custname, role)
 - User info display: `checkLoginStatus()` shows logged-in user with logout button (no separate "홈" button - logo handles navigation)
-- CORS headers automatically added by `ApiHandler`
+- CORS headers automatically added by `ApiServlet`
 
 ## Database Schema Constraints
 

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+         https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+    <display-name>Madang Bookstore</display-name>
+    <description>Educational Online Bookstore - Servlet Edition</description>
+
+    <!-- 기본 페이지 설정 -->
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+
+    <!-- 세션 타임아웃 설정 (120분) -->
+    <session-config>
+        <session-timeout>120</session-timeout>
+        <cookie-config>
+            <http-only>true</http-only>
+        </cookie-config>
+    </session-config>
+
+    <!-- 환경 변수 (데이터베이스 연결 정보) -->
+    <env-entry>
+        <env-entry-name>DB_URL</env-entry-name>
+        <env-entry-type>java.lang.String</env-entry-type>
+        <env-entry-value>jdbc:mysql://localhost:3306/madangdb?useSSL=false&amp;serverTimezone=UTC&amp;allowPublicKeyRetrieval=true</env-entry-value>
+    </env-entry>
+
+    <env-entry>
+        <env-entry-name>DB_USER</env-entry-name>
+        <env-entry-type>java.lang.String</env-entry-type>
+        <env-entry-value>madang</env-entry-value>
+    </env-entry>
+
+    <env-entry>
+        <env-entry-name>DB_PASSWORD</env-entry-name>
+        <env-entry-type>java.lang.String</env-entry-type>
+        <env-entry-value>madang</env-entry-value>
+    </env-entry>
+
+    <!-- 에러 페이지 설정 (선택사항) -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/404.html</location>
+    </error-page>
+
+    <error-page>
+        <error-code>500</error-code>
+        <location>/500.html</location>
+    </error-page>
+</web-app>
