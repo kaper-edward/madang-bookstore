@@ -16,7 +16,17 @@ function debounce(func, delay) {
 }
 
 async function initBooksPage() {
-  checkLoginStatus();
+  // 관리자 페이지 여부 확인
+  const isAdminPage = Boolean(document.getElementById('book-edit-panel'));
+
+  if (isAdminPage) {
+    renderAdminHeader('books');
+    renderAdminFooter();
+  } else {
+    renderHeader('books');
+    renderFooter();
+  }
+
   setupBooksEventListeners();
   updateBookSortIndicators();
 
@@ -512,7 +522,8 @@ function hideBookEditPanel() {
 // -------------------------
 
 async function initBookDetailPage() {
-  checkLoginStatus();
+  renderHeader('books');
+  renderFooter();
 
   const bookId = getUrlParameter('id');
   if (!bookId) {

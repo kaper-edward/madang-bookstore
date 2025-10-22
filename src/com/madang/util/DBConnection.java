@@ -8,26 +8,19 @@ import java.sql.*;
 /**
  * 데이터베이스 연결 관리 클래스 (Connection Pool 사용)
  * MySQL madangdb에 연결
- * 환경 변수를 통해 데이터베이스 정보 설정 가능
+ * ConfigManager를 통해 설정 관리 (환경 변수 > properties 파일 > 기본값)
  * HikariCP Connection Pool로 성능 최적화
  */
 public class DBConnection {
 
-    // 환경 변수에서 읽어오기 (없으면 기본값 사용)
-    private static final String URL = getEnv("DB_URL", "jdbc:mysql://localhost:3306/madangdb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true");
-    private static final String USER = getEnv("DB_USER", "madang");
-    private static final String PASSWORD = getEnv("DB_PASSWORD", "madang");
+    // ConfigManager에서 설정 읽어오기
+    private static final String URL = ConfigManager.getString("db.url",
+        "jdbc:mysql://localhost:3306/madangdb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true");
+    private static final String USER = ConfigManager.getString("db.user", "madang");
+    private static final String PASSWORD = ConfigManager.getString("db.password", "madang");
 
     // HikariCP Connection Pool (싱글톤)
     private static HikariDataSource dataSource;
-
-    /**
-     * 환경 변수 읽기 (없으면 기본값 반환)
-     */
-    private static String getEnv(String key, String defaultValue) {
-        String value = System.getenv(key);
-        return (value != null && !value.isEmpty()) ? value : defaultValue;
-    }
 
     static {
         try {
@@ -40,15 +33,15 @@ public class DBConnection {
             config.setUsername(USER);
             config.setPassword(PASSWORD);
 
-            // Connection Pool 설정
-            config.setMaximumPoolSize(10);          // 최대 연결 수
-            config.setMinimumIdle(2);               // 최소 유휴 연결 수
-            config.setConnectionTimeout(30000);     // 연결 타임아웃 (30초)
-            config.setIdleTimeout(600000);          // 유휴 연결 타임아웃 (10분)
-            config.setMaxLifetime(1800000);         // 연결 최대 수명 (30분)
+            // Connection Pool 설정 (ConfigManager에서 읽기)
+            config.setMaximumPoolSize(ConfigManager.getInt("db.pool.maximum.size", 10));
+            config.setMinimumIdle(ConfigManager.getInt("db.pool.minimum.idle", 2));
+            config.setConnectionTimeout(ConfigManager.getLong("db.pool.connection.timeout", 30000));
+            config.setIdleTimeout(ConfigManager.getLong("db.pool.idle.timeout", 600000));
+            config.setMaxLifetime(ConfigManager.getLong("db.pool.max.lifetime", 1800000));
 
             // 풀 이름 설정 (로깅용)
-            config.setPoolName("MadangDB-Pool");
+            config.setPoolName(ConfigManager.getString("db.pool.name", "MadangDB-Pool"));
 
             // DataSource 생성
             dataSource = new HikariDataSource(config);

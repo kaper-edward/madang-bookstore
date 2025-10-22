@@ -8,6 +8,8 @@ let loginTotalPages = 1;
 let loginTotalItems = 0;
 
 async function initLoginPage() {
+  renderHeader('customer');
+  renderFooter();
   setupLoginEvents();
   updateLoginSortIndicators();
   await loadLoginCustomers();

@@ -535,7 +535,8 @@ async function loadBookStatsByMonth(month) {
 }
 
 async function initDashboard() {
-  checkLoginStatus();
+  renderAdminHeader('dashboard');
+  renderAdminFooter();
   await Promise.all([
     loadOverviewStats(),
     loadBestsellers(),

@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import com.madang.util.ConfigManager;
 
 /**
  * 마당 서점 간단한 HTTP 서버
@@ -17,15 +18,21 @@ import com.sun.net.httpserver.HttpServer;
  */
 public class MadangServer {
 
-    private static final int PORT = 8888;
-    private static final String FRONTEND_DIR = "frontend";
+    private static final int PORT = ConfigManager.getInt("server.port", 8888);
+    private static final String HOST = ConfigManager.getString("server.host", "0.0.0.0");
+    private static final int THREAD_POOL_SIZE = ConfigManager.getInt("server.thread.pool.size", 10);
+    private static final String FRONTEND_DIR = ConfigManager.getString("server.frontend.dir", "frontend");
 
     public static void main(String[] args) throws IOException {
-        // HTTP 서버 생성
-        HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", PORT), 0);
+        // 설정 정보 출력
+        ConfigManager.printConfig();
+        System.out.println();
 
-        // 스레드 풀 설정 (최대 10개 동시 요청 처리)
-        server.setExecutor(Executors.newFixedThreadPool(10));
+        // HTTP 서버 생성
+        HttpServer server = HttpServer.create(new InetSocketAddress(HOST, PORT), 0);
+
+        // 스레드 풀 설정
+        server.setExecutor(Executors.newFixedThreadPool(THREAD_POOL_SIZE));
 
         // API 라우트 등록
         registerApiRoutes(server);

@@ -7,7 +7,8 @@ let orderTotalPages = 1;
 let orderTotalItems = 0;
 
 async function initOrderPage() {
-  checkLoginStatus();
+  renderHeader('orders');
+  renderFooter();
 
   if (!requireLogin()) {
     return;
@@ -110,7 +111,8 @@ async function confirmOrder(custid, bookid, saleprice) {
 // -------------------------
 
 async function initMyOrdersPage() {
-  checkLoginStatus();
+  renderHeader('orders');
+  renderFooter();
 
   if (!requireLogin()) {
     return;

@@ -7,6 +7,8 @@ let customerTotalPages = 1;
 let customerTotalItems = 0;
 
 async function initCustomersAdminPage() {
+  renderAdminHeader('customers');
+  renderAdminFooter();
   setupCustomerAdminEvents();
   setupCustomerPaginationEvents();
   updateCustomerSortIndicators();
